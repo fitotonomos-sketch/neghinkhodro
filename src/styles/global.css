@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -163,8 +163,6 @@ button, a, input, select, textarea { outline-color: var(--gold); }
 .footer-heading { color: #e9e4da; font-size: 13px; margin-bottom: 14px; }
 .footer-links { display: grid; gap: 9px; color: #a5a198; font-size: 12px; }
 .footer-bottom { border-top: 1px solid #292821; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 20px; color: #77736c; font-size: 10px; }
-.footer-bottom .by-b12 { padding: 0; font-size: 10px; }
-.footer-bottom .by-b12 svg { height: 1em; }
 .floating-actions { position: fixed; z-index: 10; bottom: 25px; left: 24px; display: grid; gap: 11px; }
 .float-button { width: 52px; height: 52px; background: #1c1c1a; border: 1px solid #645338; display: grid; place-items: center; color: var(--gold); border-radius: 50%; box-shadow: 0 8px 24px #0007; }
 .float-button:hover { background: var(--gold); color: #111; }
@@ -352,3 +350,20 @@ body { color: #171a1d; background-color: #c8ccd0 !important; }
 .hero h1, .hero p, .hero-meta, .intro-copy, .intro-band h2 { color: #f4f0e8; }
 .hero-meta span, .stats-inline span { color: #d0d2d4; }
 [hidden] { display: none !important; }
+
+.form-honeypot {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.vehicle-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 12px; }
+.vehicle-gallery a { display: block; aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid #38362f; border-radius: 10px; background: #171b20; }
+.vehicle-gallery img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
+.vehicle-gallery a:hover img { transform: scale(1.04); }

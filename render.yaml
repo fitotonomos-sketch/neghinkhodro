@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: neghinkhodro
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22.16.0"
+      - key: PUBLIC_SITE_URL
+        value: https://neghinkhodro.onrender.com
+      - key: PUBLIC_SUPABASE_URL
+        sync: false
+      - key: PUBLIC_SUPABASE_ANON_KEY
+        sync: false

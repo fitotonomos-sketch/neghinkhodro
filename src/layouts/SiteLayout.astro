@@ -1,81 +1,140 @@
-﻿---
+---
 import '../styles/global.css';
-import RequiredB12HeadScripts from '../components/RequiredB12HeadScripts.astro';
-import RequiredB12FooterScripts from '../components/RequiredB12FooterScripts.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FloatingActions from '../components/FloatingActions.astro';
-const { title = 'نگین خودرو | انتخابی فراتر از انتظار', description = 'نمایشگاه تخصصی خودروهای لوکس و خاص؛ خریدی مطمئن با همراهی مشاوران نگین خودرو.' } = Astro.props;
+
+const {
+  title = 'نگین خودرو | انتخابی فراتر از انتظار',
+  description = 'نمایشگاه تخصصی خودروهای لوکس و خاص؛ خریدی مطمئن با همراهی مشاوران نگین خودرو.',
+} = Astro.props;
+
 const isAdmin = Astro.url.pathname.startsWith('/modiriyat');
+const siteOrigin = Astro.site?.origin || import.meta.env.PUBLIC_SITE_URL || 'https://neghinkhodro.onrender.com';
+const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).href;
+const ogImage = new URL('/images/showroom-social.jpg', siteOrigin).href;
 ---
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#111111" />
-    <link rel="preconnect" href="https://cdn.b12.io" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
     {isAdmin && <meta name="robots" content="noindex, nofollow, noarchive" />}
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content="https://cdn.b12.io/client_media/c93YGkzI/aa73ecc4-e3d2-11f1-b5aa-0242ac110002-realistic-premium-automotive-showroom-banner-photograph-for-.jpg" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
-    <RequiredB12HeadScripts />
   </head>
   <body>
     {!isAdmin && <Header />}
     {isAdmin ? <slot /> : <main><slot /></main>}
     {!isAdmin && <Footer />}
     {!isAdmin && <FloatingActions />}
-    {!isAdmin && <RequiredB12FooterScripts />}
     <script>
       import { supabase } from '../lib/supabase'
+
       const applySiteValues = (rows: { key: string; value: Record<string, unknown> }[]) => {
         const values = Object.fromEntries(rows.map(row => [row.key, row.value])) as Record<string, any>
         const copy = values.content || {}
+
         document.querySelectorAll<HTMLElement>('[data-copy]').forEach(node => {
           const value = copy[node.dataset.copy || '']
           if (typeof value === 'string') node.textContent = value
         })
+
         const getPath = (path: string) => path.split('.').reduce((value: any, part: string) => value?.[part], values)
         document.querySelectorAll<HTMLElement>('[data-setting]').forEach(node => {
           const value = getPath(node.dataset.setting || '')
           if (typeof value === 'string') node.textContent = value
         })
+
         document.querySelectorAll<HTMLAnchorElement>('[data-setting-href]').forEach(node => {
           const value = getPath(node.dataset.settingHref || '')
-          if (typeof value === 'string' && value) node.href = node.dataset.settingHref?.endsWith('.phone') ? `tel:${value}` : node.dataset.settingHref?.endsWith('.email') ? `mailto:${value}` : node.dataset.settingHref?.endsWith('.whatsapp') ? `https://wa.me/${value.replace(/[^0-9]/g, '')}` : value
+          if (typeof value !== 'string' || !value) return
+          const key = node.dataset.settingHref || ''
+          if (key.endsWith('.phone')) node.href = `tel:${value}`
+          else if (key.endsWith('.email')) node.href = `mailto:${value}`
+          else if (key.endsWith('.whatsapp')) node.href = `https://wa.me/${value.replace(/[^0-9]/g, '')}`
+          else if (/^(https?:\/\/|\/)/i.test(value)) node.href = value
         })
+
         const assets = values.assets || {}
         document.querySelectorAll<HTMLImageElement>('[data-site-asset]').forEach(image => {
           const url = assets[image.dataset.siteAsset || '']
-          if (typeof url === 'string' && url) image.src = url
+          if (typeof url === 'string' && url && /^(https?:\/\/|\/)/i.test(url)) image.src = url
         })
+
         const whatsapp = document.querySelector<HTMLAnchorElement>('[data-floating-whatsapp]')
-        if (whatsapp && values.contact?.whatsapp) whatsapp.href = `https://wa.me/${String(values.contact.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(values.floating?.whatsapp_message || '')}`
+        if (whatsapp && values.contact?.whatsapp) {
+          whatsapp.href = `https://wa.me/${String(values.contact.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(values.floating?.whatsapp_message || '')}`
+        }
         if (whatsapp && values.floating?.whatsapp_enabled === false) whatsapp.hidden = true
+
         const guide = document.querySelector<HTMLAnchorElement>('[data-floating-guide]')
         if (guide && values.floating?.guide_enabled === false) guide.hidden = true
-        if (assets.favicon) { const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]'); if (icon) { icon.href = assets.favicon; icon.type = assets.favicon.toLowerCase().endsWith('.ico') ? 'image/x-icon' : 'image/png' } }
-        if (assets.og_image) { const og = document.querySelector<HTMLMetaElement>('meta[property="og:image"]'); if (og) og.content = assets.og_image }
-        if (values.identity?.description) { const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]'); if (meta) meta.content = values.identity.description }
-        if (assets.logo) document.querySelectorAll<HTMLElement>('.brand-mark').forEach(mark => { mark.replaceChildren(Object.assign(document.createElement('img'), { src: assets.logo, alt: 'لوگوی نگین خودرو', width: 40, height: 40 })) })
-        if (values.identity?.title) { document.title = document.title.replace(/نگین خودرو/g, values.identity.title); const ogTitle = document.querySelector<HTMLMetaElement>('meta[property="og:title"]'); if (ogTitle) ogTitle.content = ogTitle.content.replace(/نگین خودرو/g, values.identity.title) }
+
+        if (assets.favicon && /^(https?:\/\/|\/)/i.test(assets.favicon)) {
+          const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+          if (icon) {
+            icon.href = assets.favicon
+            icon.type = assets.favicon.toLowerCase().endsWith('.ico') ? 'image/x-icon' : 'image/png'
+          }
+        }
+        if (assets.og_image && /^(https?:\/\/|\/)/i.test(assets.og_image)) {
+          const og = document.querySelector<HTMLMetaElement>('meta[property="og:image"]')
+          if (og) og.content = assets.og_image
+        }
+        if (values.identity?.description) {
+          const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]')
+          if (meta) meta.content = values.identity.description
+        }
+        if (assets.logo && /^(https?:\/\/|\/)/i.test(assets.logo)) {
+          document.querySelectorAll<HTMLElement>('.brand-mark').forEach(mark => {
+            mark.replaceChildren(Object.assign(document.createElement('img'), {
+              src: assets.logo, alt: 'لوگوی نگین خودرو', width: 40, height: 40,
+            }))
+          })
+        }
+        if (values.identity?.title) {
+          document.title = document.title.replace(/نگین خودرو/g, values.identity.title)
+          const ogTitle = document.querySelector<HTMLMetaElement>('meta[property="og:title"]')
+          if (ogTitle) ogTitle.content = ogTitle.content.replace(/نگین خودرو/g, values.identity.title)
+        }
       }
+
       if (supabase && !location.pathname.startsWith('/modiriyat')) {
         let cachedAt = 0
         try {
-          const cached = sessionStorage.getItem('negin-public-site-settings-v2')
-          if (cached) { const parsed = JSON.parse(cached); const rows = Array.isArray(parsed) ? parsed : parsed.rows; if (Array.isArray(rows)) applySiteValues(rows); cachedAt = parsed.at || 0 }
+          const cached = sessionStorage.getItem('negin-public-site-settings-v3')
+          if (cached) {
+            const parsed = JSON.parse(cached)
+            const rows = Array.isArray(parsed) ? parsed : parsed.rows
+            if (Array.isArray(rows)) applySiteValues(rows)
+            cachedAt = parsed.at || 0
+          }
         } catch {}
-        if (Date.now() - cachedAt > 300000) supabase.from('settings').select('key,value').in('key', ['identity','assets','content','contact','footer','homepage','floating']).then(({ data }) => {
-          if (data) { applySiteValues(data); try { sessionStorage.setItem('negin-public-site-settings-v2', JSON.stringify({ rows: data, at: Date.now() })) } catch {} }
-        })
+
+        if (Date.now() - cachedAt > 300000) {
+          supabase.from('settings').select('key,value')
+            .in('key', ['identity','assets','content','contact','footer','homepage','floating'])
+            .then(({ data }) => {
+              if (data) {
+                applySiteValues(data)
+                try {
+                  sessionStorage.setItem('negin-public-site-settings-v3', JSON.stringify({ rows: data, at: Date.now() }))
+                } catch {}
+              }
+            })
+        }
       }
     </script>
   </body>

@@ -1,10 +1,10 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-// Read public build-time variables from Render or B12.
+// Read only the public Supabase URL and anon/publishable key.
 const rawSupabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.trim()
 
-// Support existing Render, B12, and Supabase variable names.
+// Support Supabase anon and publishable key variable names.
 const supabaseKey =
   import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim() ||
   import.meta.env.PUBLIC_SUPABASE_KEY?.trim() ||

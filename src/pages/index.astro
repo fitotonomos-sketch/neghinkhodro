@@ -1,24 +1,31 @@
-﻿---
+---
 import SiteLayout from '../layouts/SiteLayout.astro';
 import VehicleCard from '../components/VehicleCard.astro';
-import { vehicles } from '../data/vehicles.js';
+import { getPublicVehicles } from '../lib/public-vehicles';
+
+const vehicles = await getPublicVehicles();
 const featuredVehicles = vehicles.filter((vehicle) => vehicle.featured).slice(0, 3);
-const selectedVehicles = vehicles.filter((vehicle) => !vehicle.featured).slice(0, 3);
+const selectedVehicles = vehicles.filter((vehicle) => !vehicle.featured && vehicle.show_on_home).slice(0, 3);
+const categoryNames = [...new Set(vehicles.map((vehicle) => vehicle.category).filter(Boolean))];
+const categorySymbols = ['S', 'U', 'C', 'N'];
 const categories = [
-  { name: 'سدان لوکس', count: `${vehicles.filter((vehicle) => vehicle.category === 'سدان').length} خودرو`, symbol: 'S', query: 'سدان' },
-  { name: 'شاسی‌بلند', count: `${vehicles.filter((vehicle) => vehicle.category === 'شاسی‌بلند').length} خودرو`, symbol: 'U', query: 'شاسی‌بلند' },
-  { name: 'کوپه و اسپرت', count: `${vehicles.filter((vehicle) => vehicle.category === 'کوپه').length} خودرو`, symbol: 'C', query: 'کوپه' },
+  ...categoryNames.map((name, index) => ({
+    name,
+    count: `${vehicles.filter((vehicle) => vehicle.category === name).length} خودرو`,
+    symbol: categorySymbols[index % categorySymbols.length],
+    query: name,
+  })),
   { name: 'همه خودروها', count: `${vehicles.length} خودرو`, symbol: 'N', query: '' },
 ];
 ---
 <SiteLayout title="نگین خودرو | انتخابی فراتر از انتظار" description="نمایشگاه تخصصی خودروهای لوکس و خاص در تهران؛ انتخابی مطمئن با همراهی مشاوران نگین خودرو.">
   <section class="hero" id="hero" aria-labelledby="hero-title">
-    <img class="hero-image" data-site-asset="banner" src="https://cdn.b12.io/client_media/c93YGkzI/aa73ecc4-e3d2-11f1-b5aa-0242ac110002-realistic-premium-automotive-showroom-banner-photograph-for-.jpg" alt="خودروی لوکس در فضای اختصاصی نمایشگاه نگین خودرو" fetchpriority="high" width="1376" height="768" />
+    <img class="hero-image" data-site-asset="banner" src="/images/showroom-banner.jpg" alt="خودروی لوکس در فضای اختصاصی نمایشگاه نگین خودرو" fetchpriority="high" width="1376" height="768" />
     <div class="container"><div class="hero-copy">
       <div class="eyebrow" data-copy="hero.eyebrow">NEGIN KHODRO · TEHRAN</div>
-      <h1 id="hero-title" data-copy="hero.title">انتخابی فراتر از انتظار</h1>
-      <p data-copy="hero.subtitle">مقصدی برای یافتن خودروهای ممتاز؛ با مشاوره‌ای صادقانه، کارشناسی دقیق و تجربه‌ای آرام از نخستین بازدید تا لحظه تحویل.</p>
-      <a class="button" href="/vehicles/" data-copy="hero.button">مشاهده خودروهای موجود</a>
+      <h1 id="hero-title" data-copy="hero.title" data-setting="homepage.hero_title">انتخابی فراتر از انتظار</h1>
+      <p data-copy="hero.subtitle" data-setting="homepage.hero_subtitle">مقصدی برای یافتن خودروهای ممتاز؛ با مشاوره‌ای صادقانه، کارشناسی دقیق و تجربه‌ای آرام از نخستین بازدید تا لحظه تحویل.</p>
+      <a class="button" href="/vehicles/" data-copy="hero.button" data-setting="homepage.hero_button" data-setting-href="homepage.hero_link">مشاهده خودروهای موجود</a>
       <div class="hero-meta" aria-label="اطلاعات نمایشگاه"><div><strong data-copy="hero.experience">۱۵+</strong><span data-copy="hero.experience_label">سال تجربه</span></div><div><strong data-copy="hero.deliveries">۱۲۰۰</strong><span data-copy="hero.deliveries_label">تحویل موفق</span></div><div><strong data-copy="hero.satisfaction">۹۸٪</strong><span data-copy="hero.satisfaction_label">رضایت مشتریان</span></div></div>
     </div></div>
   </section>
@@ -46,36 +53,72 @@ const categories = [
   </section>
   <script>
     import { supabase } from '../lib/supabase'
-    const categoryGrid = document.querySelector<HTMLElement>('[data-categories-grid]')
-    if (supabase && categoryGrid) {
-      const [{ data: categoryRows }, { data: inventoryRows }] = await Promise.all([
-        supabase.from('categories').select('id,name,slug').order('sort_order').order('name'),
-        supabase.from('vehicles').select('category_id').eq('status','available')
-      ])
-      if (categoryRows?.length && inventoryRows) {
-        const counts = inventoryRows.reduce<Record<string, number>>((result, vehicle) => {
-          if (vehicle.category_id) result[vehicle.category_id] = (result[vehicle.category_id] || 0) + 1
-          return result
-        }, {})
-        categoryGrid.replaceChildren(...categoryRows.map((category, index) => {
-          const link = document.createElement('a')
-          link.className = 'category-tile'
-          link.href = `/vehicles/?category=${encodeURIComponent(category.name)}`
-          const text = document.createElement('span')
-          const title = document.createElement('strong')
-          title.textContent = category.name
-          const count = document.createElement('small')
-          count.textContent = `${new Intl.NumberFormat('fa-IR').format(counts[category.id] || 0)} خودروی موجود`
-          text.append(title, count)
-          const symbol = document.createElement('span')
-          symbol.className = 'category-symbol'
-          symbol.setAttribute('aria-hidden','true')
-          symbol.textContent = ['S','U','C','N'][index % 4]
-          link.append(text, symbol)
-          return link
-        }))
+
+    const form = document.querySelector<HTMLFormElement>('[data-inquiry-form]')
+    const success = document.querySelector<HTMLElement>('#inquiry-success')
+    const errorBox = document.querySelector<HTMLElement>('#inquiry-error')
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      if (!form || !success || !errorBox) return
+
+      const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]')
+      const formData = new FormData(form)
+      const honeypot = String(formData.get('website') || '')
+      if (honeypot) return
+
+      const name = String(formData.get('name') || '').trim()
+      const rawPhone = String(formData.get('phone') || '').trim()
+      const phone = rawPhone
+        .replace(/[۰-۹]/g, (digit) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
+        .replace(/[٠-٩]/g, (digit) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
+        .replace(/[^0-9]/g, '')
+      const vehicleName = String(formData.get('vehicle_name') || '').trim()
+      const message = String(formData.get('message') || '').trim()
+
+      success.hidden = true
+      errorBox.hidden = true
+
+      if (!supabase) {
+        errorBox.textContent = 'اتصال پایگاه داده در دسترس نیست. لطفاً بعداً تلاش کنید یا تلفنی تماس بگیرید.'
+        errorBox.hidden = false
+        return
       }
-    }
+      if (name.length < 2 || phone.length < 7 || phone.length > 15 || message.length < 2) {
+        errorBox.textContent = 'لطفاً نام، شماره تماس و پیام معتبر وارد کنید.'
+        errorBox.hidden = false
+        return
+      }
+
+      if (submitButton) {
+        submitButton.disabled = true
+        submitButton.setAttribute('aria-busy', 'true')
+      }
+
+      try {
+        const { error } = await supabase.from('inquiries').insert({
+          name,
+          phone,
+          vehicle_name: vehicleName || null,
+          message,
+          status: 'pending',
+        })
+
+        if (error) throw error
+        form.reset()
+        success.textContent = 'درخواست شما با موفقیت ثبت شد. مشاوران نگین خودرو در اولین فرصت با شما تماس می‌گیرند.'
+        success.hidden = false
+      } catch (error) {
+        console.error('Inquiry submission failed:', error)
+        errorBox.textContent = 'ارسال درخواست انجام نشد. لطفاً دوباره تلاش کنید یا با ما تماس بگیرید.'
+        errorBox.hidden = false
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false
+          submitButton.removeAttribute('aria-busy')
+        }
+      }
+    })
   </script>
 
   <section class="section intro-band" id="showroom-intro" aria-labelledby="intro-title">
@@ -90,17 +133,18 @@ const categories = [
       <div class="contact-banner" id="contact-cta"><div><h2 data-copy="contact.title">برای انتخاب بعدی‌تان آماده‌اید؟</h2><p data-copy="contact.body">مشاوران نگین خودرو برای یک گفت‌وگوی کوتاه و بی‌تعهد در کنار شما هستند.</p></div><a class="button" href="tel:+982188714070" data-setting-href="contact.phone">تماس با مشاور <span dir="ltr" data-setting="contact.phone">۰۲۱ ۸۸۷۱ ۴۰۷۰</span></a></div>
       <div class="inquiry-wrap">
         <div class="inquiry-section"><h2 id="inquiry-title" data-copy="contact.inquiry_title">درخواست مشاوره</h2><p data-copy="contact.inquiry_intro">اطلاعاتتان را ثبت کنید تا در اولین فرصت با شما تماس بگیریم.</p>
-          <form class="inquiry-form" data-form-id="803e8991-33c4-4d03-a877-1af5f4757557">
+          <form class="inquiry-form" data-inquiry-form>
             <label><span data-copy="form.name">نام و نام خانوادگی</span> <span aria-hidden="true">*</span><input type="text" name="name" autocomplete="name" required /></label>
             <label><span data-copy="form.phone">شماره تماس</span> <span aria-hidden="true">*</span><input type="tel" name="phone" autocomplete="tel" inputmode="tel" required /></label>
-            <label class="full-width">موضوع درخواست<select name="vehicle" required><option value="">انتخاب کنید</option><option>مشاوره خرید خودرو</option><option>مرسدس بنز E-Class</option><option>پورشه ماکان</option><option>BMW سری ۵</option></select></label>
+            <label class="full-width">موضوع درخواست<select name="vehicle_name" required><option value="">انتخاب کنید</option><option value="مشاوره خرید خودرو">مشاوره خرید خودرو</option>{vehicles.map((vehicle) => <option value={`${vehicle.name} ${vehicle.model}`}>{vehicle.name} {vehicle.model}</option>)}</select></label>
             <label class="full-width"><span data-copy="form.message">پیام شما</span> <span aria-hidden="true">*</span><textarea name="message" required placeholder="زمان مناسب تماس یا توضیحات تکمیلی خود را بنویسید"></textarea></label>
+            <label class="form-honeypot" aria-hidden="true">وب‌سایت<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
             <button class="button full-width" type="submit"><span data-copy="form.submit">ارسال درخواست</span> <span aria-hidden="true">←</span></button>
           </form>
           <div class="form-help">ثبت درخواست به معنی تعهد برای خرید نیست. اطلاعات شما فقط برای پیگیری همین درخواست استفاده می‌شود.</div>
         </div>
-        <div id="b12-form-done-803e8991-33c4-4d03-a877-1af5f4757557" class="admin-notice" hidden>درخواست شما با موفقیت ارسال شد. از اعتمادتان سپاسگزاریم.</div>
-        <div id="b12-form-error-803e8991-33c4-4d03-a877-1af5f4757557" class="admin-notice" hidden>ارسال درخواست انجام نشد. لطفاً دوباره تلاش کنید یا با ما تماس بگیرید.</div>
+        <div id="inquiry-success" class="admin-notice" role="status" aria-live="polite" hidden>درخواست شما با موفقیت ارسال شد. از اعتمادتان سپاسگزاریم.</div>
+        <div id="inquiry-error" class="admin-notice" role="alert" hidden>ارسال درخواست انجام نشد. لطفاً دوباره تلاش کنید یا با ما تماس بگیرید.</div>
       </div>
     </div>
   </section>

@@ -1,4 +1,4 @@
-﻿-- Expand Negin Khodro management data and create secure private uploads.
+-- Expand Negin Khodro management data and create secure private uploads.
 -- Affected tables: vehicles, brands, categories, settings, storage.objects.
 alter table public.vehicles add column if not exists engine_cc integer;
 alter table public.vehicles add column if not exists power_hp integer;

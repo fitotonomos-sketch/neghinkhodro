@@ -1,5 +1,5 @@
-﻿---
-import { formatPrice } from '../data/vehicles.js';
+---
+import { formatVehiclePrice } from '../lib/public-vehicles';
 const { vehicle, featured = false } = Astro.props;
 ---
 <article class="vehicle-card" data-vehicle-card data-name={`${vehicle.name} ${vehicle.model} ${vehicle.trim}`} data-brand={vehicle.brand} data-category={vehicle.category} data-year={vehicle.year} data-price={vehicle.price} data-status={vehicle.status} data-fuel={vehicle.fuel} data-transmission={vehicle.transmission} data-drivetrain={vehicle.drivetrain} data-condition={vehicle.condition} data-mileage={vehicle.mileage}>
@@ -11,6 +11,6 @@ const { vehicle, featured = false } = Astro.props;
     <div class="card-title-row"><h3><a href={`/vehicle/${vehicle.slug}/`}>{vehicle.name}</a></h3><span class="card-year">{vehicle.year}</span></div>
     <p class="card-trim">{vehicle.trim}</p>
     <div class="card-specs" aria-label="مشخصات کوتاه"><span>{vehicle.mileage.toLocaleString('fa-IR')} کیلومتر</span><span>{vehicle.transmission}</span><span>{vehicle.fuel}</span></div>
-    <div class="card-footer"><div class="card-price">{formatPrice(vehicle.price)} <small>تومان</small></div><a class="card-arrow" href={`/vehicle/${vehicle.slug}/`} aria-label={`جزئیات ${vehicle.name}`}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></a></div>
+    <div class="card-footer"><div class="card-price">{formatVehiclePrice(vehicle.price, vehicle.price_visible)} {vehicle.price_visible && vehicle.price > 0 && <small>تومان</small>}</div><a class="card-arrow" href={`/vehicle/${vehicle.slug}/`} aria-label={`جزئیات ${vehicle.name}`}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></a></div>
   </div>
 </article>

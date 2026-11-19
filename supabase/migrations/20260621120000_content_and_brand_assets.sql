@@ -1,4 +1,4 @@
-﻿-- Seed editable showroom copy and site image settings.
+-- Seed editable showroom copy and site image settings.
 -- Affected table: public.settings (identity, assets, content, homepage).
 insert into public.settings(key,value) values
  ('assets','{"logo":"","favicon":"","banner":"","og_image":""}'::jsonb),

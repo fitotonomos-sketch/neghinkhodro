@@ -1,4 +1,4 @@
-﻿-- Create Negin Khodro inventory and administration data.
+-- Create Negin Khodro inventory and administration data.
 -- Affected tables: admins, brands, categories, vehicles, inquiries, settings.
 -- Admin write access is restricted to the explicitly allowlisted email.
 create table if not exists public.admins (
