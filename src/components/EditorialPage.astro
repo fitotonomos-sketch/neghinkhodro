@@ -1,0 +1,9 @@
+﻿---
+import SiteLayout from '../layouts/SiteLayout.astro';
+const { title, slug, eyebrow, intro, paragraphs = [], points = [], description } = Astro.props;
+const copySlug = slug === 'buying-guide' ? 'guide' : slug;
+---
+<SiteLayout title={`${title} | نگین خودرو`} description={description || intro}>
+  <section class="page-hero" id={slug} aria-labelledby={`${slug}-title`}><div class="container"><div class="breadcrumbs"><a href="/">خانه</a> / {title}</div><div class="page-heading"><div class="eyebrow">{eyebrow}</div><h1 id={`${slug}-title`} data-copy={`${copySlug}.title`}>{title}</h1><p data-copy={`${copySlug}.intro`}>{intro}</p></div></div></section>
+  <section class="section" id={`${slug}-content`} aria-labelledby={`${slug}-content-title`}><div class="container"><div class="content-block editorial-content"><h2 id={`${slug}-content-title`}>{title}</h2>{paragraphs.map((paragraph, index) => <p data-copy={`${copySlug}.paragraph.${index}`}>{paragraph}</p>)}{points.length > 0 && <ul>{points.map((point, index) => <li data-copy={`${copySlug}.point.${index}`}>{point}</li>)}</ul>}<a class="button button-outline" href="/#contact-inquiry">گفت‌وگو با مشاوران <span aria-hidden="true">←</span></a></div></div></section>
+</SiteLayout>

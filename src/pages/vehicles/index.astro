@@ -1,0 +1,75 @@
+﻿---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import VehicleCard from '../../components/VehicleCard.astro';
+import { vehicles } from '../../data/vehicles.js';
+---
+<SiteLayout title="خودروهای موجود | نگین خودرو" description="تمام خودروهای منتخب نگین خودرو را جست‌وجو و بر اساس برند، سال، قیمت و مشخصات فنی فیلتر کنید.">
+  <section class="page-hero" id="inventory-intro" aria-labelledby="inventory-title"><div class="container"><div class="breadcrumbs"><a href="/">خانه</a> / خودروهای موجود</div><div class="page-heading"><div class="eyebrow">OUR COLLECTION</div><h1 id="inventory-title">موجودی خودروها</h1><p>جست‌وجو کنید، دقیق‌تر مقایسه کنید و برای بازدید مشاوره بگیرید.</p></div></div></section>
+  <section class="section" id="inventory" aria-labelledby="inventory-heading"><div class="container inventory-layout">
+    <aside class="filters-panel" aria-label="فیلتر خودروها">
+      <div class="filters-heading"><h2 id="inventory-heading">جست‌وجو و فیلتر</h2><a class="text-link" href="/vehicles/" data-clear-filters>پاک‌کردن</a></div>
+      <div class="filter-group"><label for="filter-search">جست‌وجو</label><input class="filter-control" id="filter-search" data-filter="search" type="search" placeholder="نام یا مدل خودرو" /></div>
+      <div class="filter-group"><label for="filter-brand">برند</label><select class="filter-control" id="filter-brand" data-filter="brand"><option value="">همه برندها</option><option>مرسدس بنز</option><option>پورشه</option><option>ب‌ام‌و</option><option>لندروور</option><option>لکسوس</option><option>آئودی</option></select></div>
+      <div class="filter-group"><label for="filter-category">دسته‌بندی</label><select class="filter-control" id="filter-category" data-filter="category"><option value="">همه دسته‌ها</option><option>سدان</option><option>شاسی‌بلند</option><option>کوپه</option></select></div>
+      <div class="filter-group"><label>سال ساخت</label><div class="filter-row"><input class="filter-control" data-filter="year_from" type="number" min="2000" placeholder="از" aria-label="سال از" /><input class="filter-control" data-filter="year_to" type="number" min="2000" placeholder="تا" aria-label="سال تا" /></div></div>
+      <div class="filter-group"><label>قیمت (میلیون تومان)</label><div class="filter-row"><input class="filter-control" data-filter="price_from" type="number" min="0" placeholder="حداقل" aria-label="حداقل قیمت" /><input class="filter-control" data-filter="price_to" type="number" min="0" placeholder="حداکثر" aria-label="حداکثر قیمت" /></div></div>
+      <div class="filter-group"><label for="filter-status">وضعیت</label><select class="filter-control" id="filter-status" data-filter="status"><option value="">همه وضعیت‌ها</option><option>موجود</option><option>رزرو شده</option><option>فروخته شده</option></select></div>
+      <div class="filter-group"><label for="filter-fuel">سوخت</label><select class="filter-control" id="filter-fuel" data-filter="fuel"><option value="">همه</option><option>بنزینی</option><option>هیبرید</option><option>برقی</option></select></div>
+      <div class="filter-group"><label for="filter-transmission">گیربکس</label><select class="filter-control" id="filter-transmission" data-filter="transmission"><option value="">همه</option><option>اتوماتیک</option><option>دستی</option></select></div>
+      <div class="filter-group"><label for="filter-drivetrain">محور محرک</label><select class="filter-control" id="filter-drivetrain" data-filter="drivetrain"><option value="">همه</option><option>دیفرانسیل عقب</option><option>چهارچرخ محرک</option><option>دیفرانسیل جلو</option></select></div>
+      <div class="filter-group"><label for="filter-condition">وضعیت خودرو</label><select class="filter-control" id="filter-condition" data-filter="condition"><option value="">همه</option><option>نو</option><option>کارکرده</option></select></div>
+      <div class="filter-group"><label>کارکرد (کیلومتر)</label><div class="filter-row"><input class="filter-control" data-filter="mileage_from" type="number" min="0" placeholder="از" aria-label="کارکرد از" /><input class="filter-control" data-filter="mileage_to" type="number" min="0" placeholder="تا" aria-label="کارکرد تا" /></div></div>
+      <div class="filter-actions"><button class="button" type="button" data-apply-filters>اعمال فیلترها</button><a class="button button-outline" href="/vehicles/" data-clear-filters>پاک‌کردن فیلترها</a></div>
+    </aside>
+    <div class="inventory-results">
+      <div class="inventory-topbar"><div class="results-count"><strong data-results-count>{vehicles.length}</strong> خودرو در فهرست نمونه</div><label class="results-count">مرتب‌سازی <select class="sort-select" data-sort><option value="newest">جدیدترین</option><option value="price-asc">قیمت: کم به زیاد</option><option value="price-desc">قیمت: زیاد به کم</option><option value="year-desc">سال: جدیدتر</option><option value="year-asc">سال: قدیمی‌تر</option><option value="mileage-asc">کارکرد: کمتر</option></select></label></div>
+      <div class="vehicle-grid inventory-grid" data-inventory-grid>{vehicles.map((vehicle) => <VehicleCard vehicle={vehicle} />)}</div>
+      <div class="empty-state" data-empty-state hidden><h3>خودرویی با این مشخصات پیدا نشد</h3><p>فیلترها را تغییر دهید یا همه خودروها را ببینید.</p><a class="button button-outline" href="/vehicles/">پاک‌کردن فیلترها</a></div>
+      <nav class="pagination" aria-label="صفحه‌بندی نتایج" data-pagination><button type="button" disabled aria-label="صفحه قبل">‹</button><button type="button" aria-current="page">۱</button><button type="button" disabled aria-label="صفحه بعد">›</button></nav>
+    </div>
+  </div></section>
+  <script>
+    const grid = document.querySelector<HTMLElement>('[data-inventory-grid]');
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-vehicle-card]'));
+    const controls = Array.from(document.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-filter]'));
+    const count = document.querySelector<HTMLElement>('[data-results-count]');
+    const empty = document.querySelector<HTMLElement>('[data-empty-state]');
+    const sort = document.querySelector<HTMLSelectElement>('[data-sort]');
+    const filterKeys = ['search','brand','category','year_from','year_to','price_from','price_to','status','fuel','transmission','drivetrain','condition','mileage_from','mileage_to'];
+    const initial = new URLSearchParams(location.search);
+    controls.forEach((input) => { const value = initial.get(input.dataset.filter || ''); if (value !== null) input.value = value; });
+    if (sort && initial.has('sort')) sort.value = initial.get('sort') || 'newest';
+    const apply = () => {
+      const values = Object.fromEntries(controls.map((control) => [control.dataset.filter || '', control.value.trim()]));
+      const filtered = cards.filter((card) => {
+        const text = (values.search || '').toLocaleLowerCase('fa');
+        const matchText = !text || (card.dataset.name || '').toLocaleLowerCase('fa').includes(text);
+        const matchBrand = !values.brand || card.dataset.brand === values.brand;
+        const matchCategory = !values.category || card.dataset.category === values.category;
+        const year = Number(card.dataset.year), price = Number(card.dataset.price) / 1000000, mileage = Number(card.dataset.mileage);
+        return matchText && matchBrand && matchCategory && (!values.year_from || year >= Number(values.year_from)) && (!values.year_to || year <= Number(values.year_to)) && (!values.price_from || price >= Number(values.price_from)) && (!values.price_to || price <= Number(values.price_to)) && (!values.status || card.dataset.status === values.status) && (!values.fuel || card.dataset.fuel === values.fuel) && (!values.transmission || card.dataset.transmission === values.transmission) && (!values.drivetrain || card.dataset.drivetrain === values.drivetrain) && (!values.condition || card.dataset.condition === values.condition) && (!values.mileage_from || mileage >= Number(values.mileage_from)) && (!values.mileage_to || mileage <= Number(values.mileage_to));
+      });
+      const sortMode = sort?.value || 'newest';
+      filtered.sort((a,b) => {
+        const key = sortMode.startsWith('price') ? 'price' : sortMode.startsWith('year') || sortMode === 'newest' ? 'year' : 'mileage';
+        const av = Number(a.dataset[key]);
+        const bv = Number(b.dataset[key]);
+        if (sortMode === 'price-asc' || sortMode === 'year-asc' || sortMode === 'mileage-asc') return av - bv;
+        return bv - av;
+      });
+      cards.forEach((card) => { card.hidden = true; });
+      filtered.forEach((card) => { card.hidden = false; grid?.appendChild(card); });
+      if (count) count.textContent = new Intl.NumberFormat('fa-IR').format(filtered.length);
+      if (empty) empty.hidden = filtered.length > 0;
+      const params = new URLSearchParams();
+      filterKeys.forEach((key) => { if (values[key]) params.set(key, values[key]); });
+      if (sort && sort.value !== 'newest') params.set('sort', sort.value);
+      const query = params.toString();
+      history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+    };
+    controls.forEach((control) => control.addEventListener('input', apply));
+    sort?.addEventListener('change', apply);
+    document.querySelector('[data-apply-filters]')?.addEventListener('click', apply);
+    apply();
+  </script>
+</SiteLayout>

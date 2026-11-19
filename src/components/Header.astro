@@ -1,0 +1,38 @@
+﻿---
+const links = [
+  { href: '/', label: 'خانه', copy: 'nav.home' },
+  { href: '/vehicles/', label: 'خودروها', copy: 'nav.vehicles' },
+  { href: '/about/', label: 'درباره ما', copy: 'nav.about' },
+  { href: '/guide/', label: 'راهنمای خرید', copy: 'nav.guide' },
+  { href: '/contact/', label: 'تماس با ما', copy: 'nav.contact' },
+];
+---
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand-lockup" href="/" aria-label="نگین خودرو، صفحه نخست">
+      <span class="brand-mark" aria-hidden="true">ن</span>
+      <span><span class="brand-name" data-setting="identity.title">نگین خودرو</span><span class="brand-subtitle" data-setting="identity.tagline">NEGIN KHODRO</span></span>
+    </a>
+    <nav class="main-nav" id="main-navigation" aria-label="منوی اصلی">
+      {links.map((link) => <a href={link.href} data-copy={link.copy}>{link.label}</a>)}
+    </nav>
+    <div class="header-actions">
+      <a class="header-phone" href="tel:+982188714070" data-setting="contact.phone" data-setting-href="contact.phone" dir="ltr">۰۲۱ ۸۸۷۱ ۴۰۷۰</a>
+      <a class="header-search" href="/vehicles/#inventory" aria-label="جست‌وجوی خودرو">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.7"/><path d="m16 16 4.5 4.5"/></svg>
+      </a>
+      <button class="mobile-menu" type="button" aria-label="باز کردن منو" aria-expanded="false" aria-controls="main-navigation">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<script>
+  const menuButton = document.querySelector<HTMLButtonElement>('.mobile-menu');
+  const navigation = document.querySelector<HTMLElement>('#main-navigation');
+  menuButton?.addEventListener('click', () => {
+    const open = menuButton.getAttribute('aria-expanded') === 'true';
+    menuButton.setAttribute('aria-expanded', String(!open));
+    navigation?.classList.toggle('is-open', !open);
+  });
+</script>
