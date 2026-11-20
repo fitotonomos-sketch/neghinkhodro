@@ -3,12 +3,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 
-const siteUrl =
-  process.env.PUBLIC_SITE_URL?.trim() ||
-  'https://neghinkhodro.onrender.com';
-
 export default defineConfig({
-  site: siteUrl,
+  site: 'https://neghinkhodro.onrender.com',
   output: 'static',
   trailingSlash: 'always',
   integrations: [react()],
