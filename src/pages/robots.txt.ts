@@ -1,12 +1,18 @@
 import type { APIRoute } from 'astro';
 
+export const prerender = true;
+
 export const GET: APIRoute = ({ site }) => {
-  const origin = (import.meta.env.PUBLIC_SITE_URL || site?.origin || 'https://neghinkhodro.onrender.com').replace(/\/$/, '');
+  const origin = (
+    import.meta.env.PUBLIC_SITE_URL ||
+    site?.origin ||
+    'https://YOUR-DOMAIN.COM'
+  ).replace(/\/$/, '');
+
   const body = [
     'User-agent: *',
     'Allow: /',
     'Disallow: /modiriyat/',
-    'Disallow: /auth/',
     '',
     `Sitemap: ${origin}/sitemap.xml`,
     '',

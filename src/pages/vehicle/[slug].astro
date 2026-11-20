@@ -1,18 +1,26 @@
 ---
-export const prerender = false;
-
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import VehicleCard from '../../components/VehicleCard.astro';
-import { getPublicVehicleBySlug, getPublicVehicles, formatVehiclePrice } from '../../lib/public-vehicles';
+import { getPublicVehicles, formatVehiclePrice } from '../../lib/public-vehicles';
 
-const slug = Astro.params.slug || '';
-const vehicle = await getPublicVehicleBySlug(slug);
-if (!vehicle) return Astro.redirect('/vehicles/', 302);
+export async function getStaticPaths() {
+  const vehicles = await getPublicVehicles();
 
-const allVehicles = await getPublicVehicles();
-const related = allVehicles
-  .filter((item) => item.brand === vehicle.brand && item.slug !== vehicle.slug)
-  .slice(0, 3);
+  return vehicles
+    .filter((vehicle) => typeof vehicle.slug === 'string' && vehicle.slug.trim())
+    .map((vehicle) => ({
+      params: { slug: vehicle.slug },
+      props: {
+        vehicle,
+        related: vehicles
+          .filter((item) => item.brand === vehicle.brand && item.slug !== vehicle.slug)
+          .slice(0, 3),
+      },
+    }));
+}
+
+const { vehicle, related } = Astro.props;
+
 const specs = [
   ['برند', vehicle.brand],
   ['مدل', vehicle.model],
