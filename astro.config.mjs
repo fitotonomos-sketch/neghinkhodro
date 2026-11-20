@@ -4,8 +4,8 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 
 const siteUrl =
-  process.env.PUBLIC_SITE_URL ||
-  'https://YOUR-DOMAIN.COM';
+  process.env.PUBLIC_SITE_URL?.trim() ||
+  'https://neghinkhodro.onrender.com';
 
 export default defineConfig({
   site: siteUrl,
