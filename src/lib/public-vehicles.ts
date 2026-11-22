@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+
 import { vehicles as demoVehicles } from '../data/vehicles.js';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.trim();
@@ -7,17 +7,6 @@ const supabaseKey =
   import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim() ||
   import.meta.env.PUBLIC_SUPABASE_KEY?.trim() ||
   import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
-
-const db =
-  supabaseUrl && supabaseKey
-    ? createClient(supabaseUrl, supabaseKey, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false,
-        },
-      })
-    : null;
 
 const statusLabels: Record<string, string> = {
   available: 'موجود',
@@ -33,7 +22,9 @@ const conditionLabels: Record<string, string> = {
 
 function mapVehicle(row: any) {
   const brand = Array.isArray(row.brand) ? row.brand[0] : row.brand;
-  const category = Array.isArray(row.category) ? row.category[0] : row.category;
+  const category = Array.isArray(row.category)
+    ? row.category[0]
+    : row.category;
 
   return {
     ...row,
@@ -58,7 +49,8 @@ function mapVehicle(row: any) {
       : '—',
     color: row.exterior_color || '—',
     image: row.main_image || '/images/vehicle-placeholder.jpg',
-    image_alt: row.image_alt || `${row.name || ''} ${row.model || ''}`.trim(),
+    image_alt:
+      row.image_alt || `${row.name || ''} ${row.model || ''}`.trim(),
     badge: row.featured ? 'منتخب نگین' : '',
     description:
       row.description ||
@@ -84,52 +76,94 @@ function mapDemoVehicle(vehicle: any) {
   };
 }
 
-function requireDatabase() {
-  if (!db) {
-    throw new Error(
-      '[Negin Khodro] Static production build requires PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY. Copy .env.example to .env.production and fill in the real Supabase project values before building.'
-    );
+function getDatabaseConfig() {
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
   }
-  return db;
+
+  return { supabaseUrl, supabaseKey };
 }
 
-/**
- * Loads the public inventory during Astro build.
- * The static hosting version intentionally fails the production build
- * if Supabase is unavailable, rather than publishing a misleading empty catalog.
- */
-export async function getPublicVehicles() {
-  if (!db) {
-    if (import.meta.env.DEV) return demoVehicles.map(mapDemoVehicle);
-    requireDatabase();
+async function fetchPublicInventory() {
+  const config = getDatabaseConfig();
+
+  if (!config) {
+    throw new Error(
+      'Supabase configuration is missing. Check Render environment variables.'
+    );
   }
 
-  const client = requireDatabase();
+  // Import only when inventory is requested.
+  const { createClient } = await import('@supabase/supabase-js');
+
+  const client = createClient(
+    config.supabaseUrl,
+    config.supabaseKey,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
+  );
+
+  // Read only public inventory and public relation fields.
+  // This query must not require access to the admins table.
   const { data, error } = await client
     .from('vehicles')
-    .select('*, brand:brands(name,slug), category:categories(name,slug)')
+    .select(`
+      *,
+      brand:brands(name,slug),
+      category:categories(name,slug)
+    `)
     .eq('status', 'available')
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false });
 
   if (error) {
     throw new Error(
-      `[Negin Khodro] Failed to load inventory from Supabase during build: ${error.message}`
+      `[Negin Khodro] Failed to load public inventory: ${error.message}`
     );
   }
 
   return (data || []).map(mapVehicle);
 }
 
-/**
- * Retained for compatibility with other project modules.
- */
-export async function getPublicVehicleBySlug(slug: string) {
-  const vehicles = await getPublicVehicles();
-  return vehicles.find((vehicle) => vehicle.slug === slug) || null;
+export async function getPublicVehicles() {
+  try {
+    return await fetchPublicInventory();
+  } catch (error) {
+    console.error(
+      '[Negin Khodro] Public inventory loading failed:',
+      error
+    );
+
+    // Development fallback only.
+    if (import.meta.env.DEV) {
+      return demoVehicles.map(mapDemoVehicle);
+    }
+
+    // Production must not silently publish demo inventory.
+    throw error;
+  }
 }
 
-export function formatVehiclePrice(price: number, visible = true) {
-  if (!visible || !price) return 'استعلام قیمت';
+export async function getPublicVehicleBySlug(slug: string) {
+  const vehicles = await getPublicVehicles();
+
+  return (
+    vehicles.find((vehicle) => vehicle.slug === slug) || null
+  );
+}
+
+export function formatVehiclePrice(
+  price: number,
+  visible = true
+) {
+  if (!visible || !price) {
+    return 'استعلام قیمت';
+  }
+
   return new Intl.NumberFormat('fa-IR').format(price);
 }
