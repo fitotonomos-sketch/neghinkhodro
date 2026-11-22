@@ -1,53 +1,64 @@
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 
-// Read only the public Supabase URL and anon/publishable key.
-const rawSupabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.trim()
+const rawSupabaseUrl =
+  import.meta.env.PUBLIC_SUPABASE_URL?.trim();
 
-// Support Supabase anon and publishable key variable names.
 const supabaseKey =
   import.meta.env.PUBLIC_SUPABASE_ANON_KEY?.trim() ||
   import.meta.env.PUBLIC_SUPABASE_KEY?.trim() ||
-  import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
+  import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
 
-const supabaseUrl = rawSupabaseUrl?.replace(/\/+$/, '')
+const supabaseUrl = rawSupabaseUrl?.replace(/\/+$/, '');
 
 function isValidSupabaseUrl(
   value: string | undefined
 ): value is string {
-  if (!value) return false
+  if (!value) return false;
 
   try {
-    const parsed = new URL(value)
+    const parsed = new URL(value);
 
     const isLocalDevelopmentHost =
       parsed.hostname === 'localhost' ||
       parsed.hostname === '127.0.0.1' ||
-      parsed.hostname === '[::1]'
+      parsed.hostname === '[::1]';
 
     return (
       (parsed.protocol === 'https:' ||
-        (parsed.protocol === 'http:' && isLocalDevelopmentHost)) &&
+        (parsed.protocol === 'http:' &&
+          isLocalDevelopmentHost)) &&
       parsed.pathname === '/' &&
       !parsed.username &&
       !parsed.password &&
       !parsed.search &&
       !parsed.hash
-    )
+    );
   } catch {
-    return false
+    return false;
   }
 }
 
-const validSupabaseUrl = isValidSupabaseUrl(supabaseUrl)
+const validSupabaseUrl = isValidSupabaseUrl(supabaseUrl);
 
 if (!validSupabaseUrl || !supabaseKey) {
   console.error(
-    'Supabase configuration error. Check PUBLIC_SUPABASE_URL and your public Supabase key in Render Environment.'
-  )
+    '[Negin Khodro] Supabase configuration error. Check PUBLIC_SUPABASE_URL and the public Supabase key in Render Environment.'
+  );
 }
 
 export const supabase =
   validSupabaseUrl && supabaseUrl && supabaseKey
-    ? createClient(supabaseUrl, supabaseKey)
-    : null
+    ? createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+        global: {
+          headers: {
+            'X-Client-Info': 'negin-khodro-web',
+          },
+        },
+      })
+    : null;
