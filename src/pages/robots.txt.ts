@@ -1,18 +1,17 @@
 import type { APIRoute } from 'astro';
 
-export const prerender = true;
+export const prerender = false;
 
 export const GET: APIRoute = ({ site }) => {
-  const origin = (
-    import.meta.env.PUBLIC_SITE_URL ||
-    site?.origin ||
-    'https://YOUR-DOMAIN.COM'
-  ).replace(/\/$/, '');
-
+  const configuredOrigin = import.meta.env.PUBLIC_SITE_URL || site?.origin || 'https://neghinkhodro.onrender.com';
+  let origin = 'https://neghinkhodro.onrender.com';
+  try { origin = new URL(configuredOrigin).origin; }
+  catch { console.error('[Negin Khodro] Invalid PUBLIC_SITE_URL in robots configuration.'); }
   const body = [
     'User-agent: *',
     'Allow: /',
     'Disallow: /modiriyat/',
+    'Disallow: /api/',
     '',
     `Sitemap: ${origin}/sitemap.xml`,
     '',

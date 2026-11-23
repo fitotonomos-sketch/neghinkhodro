@@ -1,42 +1,42 @@
-# Negin Khodro — Static shared-hosting edition
+# Negin Khodro — Node.js SSR hosting
 
-This edition is configured for Apache-based Linux shared hosting (cPanel / DirectAdmin).
-It does not require Node.js on the hosting server. Node.js is required only on the computer
-where the site is built.
+This project is an Astro SSR application. It is **not** a static `public_html` package.
+The hosting provider must support a persistent Node.js process (Render Web Service,
+DirectAdmin Node.js/Passenger, or an equivalent runtime).
 
-## Important behavior
+## Requirements
 
-- Public pages and individual vehicle detail pages are generated as static HTML at build time.
-- Vehicle inventory is fetched from Supabase during the build.
-- The admin panel and browser-side Supabase operations remain in the project.
-- When a vehicle is added/edited/deleted, run a new build and upload the new `dist/` contents
-  to refresh generated public HTML and `sitemap.xml`.
-- The build intentionally stops if Supabase credentials are missing or inventory cannot be read.
-  This prevents accidentally publishing an empty/stale vehicle catalogue.
+- Node.js 22.16.x (or a compatible Node 22 release)
+- A persistent Node application process
+- HTTPS outbound access to the Supabase project
+- Environment variables listed in `.env.example`
 
-## Build
+## Commands — Windows PowerShell
 
-1. Install Node.js 22 or newer on your own computer.
-2. Copy `.env.example` to `.env.production`.
-3. Fill in the real domain and Supabase URL + public anon/publishable key.
-4. Run:
+```powershell
+Copy-Item .env.example .env
+notepad .env
+npm install
+npm run build
+npm run start
+```
 
-   npm install
-   npm run build
+The standalone Node adapter starts `dist/server/entry.mjs`. Do not upload the generated
+`dist/` directory to Apache as if it were a static site. Do not deploy this repository as
+a Render Static Site.
 
-5. Upload the CONTENTS of `dist/` (not the `dist` folder itself) into `public_html/`.
-6. Ensure Apache `mod_rewrite`, `mod_expires`, and `mod_deflate` are enabled.
-   The included `public/.htaccess` is copied to `dist/.htaccess`.
+## Render
 
-## Supabase security
+The included `render.yaml` defines a Free Web Service for initial testing, build/start commands, Node runtime,
+health check, and required Supabase environment variables. Render Free instances sleep after inactivity. Set the two Supabase values
+in the Render dashboard; do not commit them to Git.
 
-- Use only the public anon/publishable key in `PUBLIC_SUPABASE_ANON_KEY`.
-- Never expose the `service_role` or secret key in frontend environment variables.
-- Review Row Level Security policies for `vehicles`, `inquiries`, site settings, and storage.
-- The public inventory query currently reads rows whose `status` is `available`.
+## Supabase
 
-## Validation
+Run migration files in `supabase/migrations` in filename order. On an existing project,
+run only migrations that have not already been applied, then run the new
+`20261122100000_harden_admin_rls_and_grants.sql` migration. Do not re-run data-import
+migrations blindly against a production database.
 
-This package has been source-patched against the supplied ZIP. A successful production build
-still requires the real Supabase project credentials and a reachable Supabase project.
-Run `npm run build` before uploading. Do not upload if the build fails.
+Use only the public anon/publishable key in `PUBLIC_SUPABASE_ANON_KEY`. Never put a
+`service_role` or `sb_secret_` key in a `PUBLIC_` variable.

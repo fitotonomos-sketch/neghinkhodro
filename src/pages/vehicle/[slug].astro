@@ -1,27 +1,21 @@
 ---
+export const prerender = false;
+
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import VehicleCard from '../../components/VehicleCard.astro';
-import { getPublicVehicles, formatVehiclePrice } from '../../lib/public-vehicles';
+import { getPublicVehicleBySlug, getPublicVehicles, formatVehiclePrice } from '../../lib/public-vehicles';
 
-export async function getStaticPaths() {
-  const vehicles = await getPublicVehicles();
-
-  return vehicles
-    .filter((vehicle) => typeof vehicle.slug === 'string' && vehicle.slug.trim())
-    .map((vehicle) => ({
-      params: { slug: vehicle.slug },
-      props: {
-        vehicle,
-        related: vehicles
-          .filter((item) => item.brand === vehicle.brand && item.slug !== vehicle.slug)
-          .slice(0, 3),
-      },
-    }));
+const slug = Astro.params.slug || '';
+const vehicle = await getPublicVehicleBySlug(slug);
+if (!vehicle) {
+  Astro.response.status = 404;
 }
 
-const { vehicle, related } = Astro.props;
-
-const specs = [
+const allVehicles = vehicle ? await getPublicVehicles() : [];
+const related = vehicle
+  ? allVehicles.filter((item) => item.brand === vehicle.brand && item.slug !== vehicle.slug).slice(0, 3)
+  : [];
+const specs = vehicle ? [
   ['برند', vehicle.brand],
   ['مدل', vehicle.model],
   ['سال ساخت', vehicle.year ? vehicle.year.toLocaleString('fa-IR') : '—'],
@@ -34,8 +28,13 @@ const specs = [
   ['رنگ بدنه', vehicle.color],
   ['وضعیت', vehicle.status],
   ['دسته‌بندی', vehicle.category],
-];
+] : [];
 ---
+{!vehicle ? (
+  <SiteLayout title="خودرو پیدا نشد | نگین خودرو" description="خودروی درخواستی در فهرست موجودی فعال نیست.">
+    <section class="section"><div class="container empty-state"><h1>این خودرو در دسترس نیست</h1><p>ممکن است خودرو فروخته شده یا از فهرست موجودی خارج شده باشد.</p><a class="button" href="/vehicles/">بازگشت به فهرست خودروها</a></div></section>
+  </SiteLayout>
+) : (
 <SiteLayout title={`${vehicle.seo_title || `${vehicle.name} ${vehicle.model}`} | نگین خودرو`} description={vehicle.meta_description || vehicle.description}>
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
@@ -51,7 +50,7 @@ const specs = [
     color: vehicle.color,
     vehicleConfiguration: vehicle.trim,
     category: vehicle.category,
-  })}></script>
+  }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')}></script>
   <section class="page-hero" id="vehicle-overview" aria-labelledby="vehicle-title"><div class="container"><div class="breadcrumbs"><a href="/">خانه</a> / <a href="/vehicles/">خودروها</a> / {vehicle.name}</div><div class="page-heading"><div class="eyebrow">VEHICLE DETAILS · {vehicle.year}</div><h1 id="vehicle-title">{vehicle.name} {vehicle.model}</h1><p>{vehicle.trim}</p></div></div></section>
   <section class="section" id="vehicle-details" aria-labelledby="vehicle-title"><div class="container detail-grid">
     <div>
@@ -74,3 +73,4 @@ const specs = [
   </div></section>
   {related.length > 0 && <section class="section" id="related-vehicles" aria-labelledby="related-title"><div class="container"><div class="section-heading"><div><div class="eyebrow">YOU MAY ALSO LIKE</div><h2 id="related-title">خودروهای مشابه</h2></div><a class="text-link" href="/vehicles/">مشاهده همه <span aria-hidden="true">←</span></a></div><div class="vehicle-grid">{related.map((item) => <VehicleCard vehicle={item} />)}</div></div></section>}
 </SiteLayout>
+)}

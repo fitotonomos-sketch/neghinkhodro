@@ -9,15 +9,128 @@ const slug=(s:string)=>`${s.trim().toLowerCase().replace(/[^\p{L}\p{N}]+/gu,'-')
 export default function AdminPanel(){
  const [session,setSession]=useState<any>(null),[loginEmail,setLoginEmail]=useState(''),[loginPassword,setLoginPassword]=useState(''),[notice,setNotice]=useState(''),[tab,setTab]=useState('dashboard'),[saving,setSaving]=useState(false)
  const [vehicles,setVehicles]=useState<Row[]>([]),[inquiries,setInquiries]=useState<Row[]>([]),[brands,setBrands]=useState<Row[]>([]),[categories,setCategories]=useState<Row[]>([]),[settings,setSettings]=useState<Row>({}),[draft,setDraft]=useState<Row>(vehicleDefaults),[editing,setEditing]=useState<string|null>(null),[selected,setSelected]=useState<string[]>([]),[search,setSearch]=useState(''),[filterStatus,setFilterStatus]=useState(''),[filterFeatured,setFilterFeatured]=useState(''),[inquiryFilter,setInquiryFilter]=useState(''),[brandName,setBrandName]=useState(''),[categoryName,setCategoryName]=useState(''),[currentPassword,setCurrentPassword]=useState(''),[nextPassword,setNextPassword]=useState(''),[accountEmail,setAccountEmail]=useState(''),[storageCount,setStorageCount]=useState(0)
- async function load(){if(!supabase)return;const {data:{user}}=await supabase.auth.getUser();if(!user?.email){setSession(null);return}const {data:admin}=await supabase.from('admins').select('email').eq('email',user.email).maybeSingle();if(!admin){await supabase.auth.signOut();setNotice('این حساب مجاز نیست.');return}setSession(user);setAccountEmail(user.email);const [v,i,b,c,s,files]=await Promise.all([supabase.from('vehicles').select('*').order('sort_order').order('created_at',{ascending:false}),supabase.from('inquiries').select('*').order('created_at',{ascending:false}).limit(500),supabase.from('brands').select('*').order('sort_order').order('name'),supabase.from('categories').select('*').order('sort_order').order('name'),supabase.from('settings').select('*'),supabase.storage.from('negin-uploads').list(user.id,{limit:1000})]);setVehicles(v.data||[]);setInquiries(i.data||[]);setBrands(b.data||[]);setCategories(c.data||[]);setSettings(Object.fromEntries((s.data||[]).map(x=>[x.key,x.value])));setStorageCount((files.data||[]).reduce((n,x)=>n+(x.metadata?.size||0),0))}
- useEffect(()=>{if(!supabase){setNotice('اتصال Supabase تنظیم نشده است؛ متغیرهای محیطی سایت را بررسی کنید.');return}supabase.auth.getSession().then(({data})=>{if(data.session)load()});const {data:{subscription}}=supabase.auth.onAuthStateChange((_e,s)=>{if(s)load();else setSession(null)});return()=>subscription.unsubscribe()},[])
+ async function load(){
+  if(!supabase)return;
+  try{
+   const {data:userData,error:userError}=await supabase.auth.getUser();
+   if(userError)throw userError;
+   const user=userData.user;
+   if(!user?.email){setSession(null);return;}
+
+   const {data:admin,error:adminError}=await supabase
+    .from('admins').select('email').eq('email',user.email.toLowerCase()).maybeSingle();
+   if(adminError){
+    setSession(null);
+    setNotice(`بررسی دسترسی مدیر ناموفق بود: ${adminError.message}`);
+    return;
+   }
+   if(!admin){
+    await supabase.auth.signOut();
+    setSession(null);
+    setNotice('این ایمیل در فهرست مدیران مجاز نیست.');
+    return;
+   }
+
+   const [v,i,b,c,s,files]=await Promise.all([
+    supabase.from('vehicles').select('*').order('sort_order').order('created_at',{ascending:false}),
+    supabase.from('inquiries').select('*').order('created_at',{ascending:false}).limit(500),
+    supabase.from('brands').select('*').order('sort_order').order('name'),
+    supabase.from('categories').select('*').order('sort_order').order('name'),
+    supabase.from('settings').select('*'),
+    supabase.storage.from('negin-uploads').list(user.id,{limit:1000}),
+   ]);
+   setVehicles(v.data||[]);setInquiries(i.data||[]);setBrands(b.data||[]);setCategories(c.data||[]);
+   setSettings(Object.fromEntries((s.data||[]).map(x=>[x.key,x.value])));
+   setStorageCount((files.data||[]).reduce((n,x)=>n+(x.metadata?.size||0),0));
+   const failures=[v.error,i.error,b.error,c.error,s.error,files.error].filter(Boolean);
+   setNotice(failures.length?`بخشی از اطلاعات بارگذاری نشد: ${failures.map(x=>x?.message).join(' | ')}`:'');
+   setSession(user);setAccountEmail(user.email);
+  }catch(error){
+   console.error('[Negin Khodro] Admin panel load failed:',error);
+   setNotice(`بارگذاری پنل مدیریت ناموفق بود: ${error instanceof Error?error.message:String(error)}`);
+  }
+ }
+ useEffect(()=>{
+  if(!supabase){setNotice('اتصال Supabase تنظیم نشده است؛ متغیرهای محیطی سایت را بررسی کنید.');return;}
+  let mounted=true;
+  supabase.auth.getSession().then(({data,error})=>{
+   if(!mounted)return;
+   if(error){setNotice(`بازیابی نشست ناموفق بود: ${error.message}`);return;}
+   if(data.session)void load();
+  }).catch(error=>{if(mounted)setNotice(`بازیابی نشست ناموفق بود: ${String(error)}`);});
+  const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,nextSession)=>{
+   // Supabase recommends leaving the auth callback before issuing another API request.
+   window.setTimeout(()=>{
+    if(!mounted)return;
+    if(nextSession)void load();
+    else setSession(null);
+   },0);
+  });
+  return()=>{mounted=false;subscription.unsubscribe();};
+ },[])
  const available=vehicles.filter(x=>x.status==='available').length,reserved=vehicles.filter(x=>x.status==='reserved').length,sold=vehicles.filter(x=>x.status==='sold').length,pending=inquiries.filter(x=>x.status==='pending').length
  const filtered=useMemo(()=>vehicles.filter(v=>(!search||`${v.name} ${v.model} ${v.trim}`.toLowerCase().includes(search.toLowerCase()))&&(!filterStatus||v.status===filterStatus)&&(!filterFeatured||(filterFeatured==='featured'?v.featured:v.show_on_home))),[vehicles,search,filterStatus,filterFeatured])
  const visibleInquiries=inquiries.filter(i=>!inquiryFilter||i.status===inquiryFilter)
- async function login(e:React.FormEvent){e.preventDefault();if(!supabase)return;const {error}=await supabase.auth.signInWithPassword({email:loginEmail.trim(),password:loginPassword});if(error)setNotice('ورود انجام نشد؛ اطلاعات را بررسی کنید.');else{setLoginPassword('');await load()}}
+ async function login(e:React.FormEvent){
+  e.preventDefault();
+  if(!supabase)return;
+  try{
+   const {error}=await supabase.auth.signInWithPassword({email:loginEmail.trim().toLowerCase(),password:loginPassword});
+   if(error){setNotice('ورود انجام نشد؛ ایمیل تأییدشده و رمز عبور را بررسی کنید.');return;}
+   setLoginPassword('');
+   await load();
+  }catch(error){setNotice(`ارتباط با Supabase برقرار نشد: ${error instanceof Error?error.message:String(error)}`);}
+ }
  function editVehicle(v:Row){setDraft({...vehicleDefaults,...v,year:v.year??'',price:v.price??'',technical_specs:v.technical_specs||[]});setEditing(v.id);setTab('vehicle-form')}
- async function upload(file:File){if(!supabase||!file.type.match(/^image\/(jpeg|png|webp|x-icon|vnd.microsoft.icon)$/)||file.size>5*1024*1024){setNotice('فقط تصویر JPG، PNG، WebP یا آیکن تا ۵ مگابایت مجاز است.');return null}const user=(await supabase.auth.getUser()).data.user;if(!user)return null;let optimized:Blob=file;let ext=file.type==='image/x-icon'||file.type==='image/vnd.microsoft.icon'?'ico':'webp';if(file.type!=='image/x-icon'&&file.type!=='image/vnd.microsoft.icon'){try{const bitmap=await createImageBitmap(file);const scale=Math.min(1,1600/bitmap.width,1200/bitmap.height);const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);const ctx=canvas.getContext('2d');if(ctx){ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);optimized=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('تصویر بهینه نشد.')),'image/webp',0.82));ext='webp'}bitmap.close()}catch{optimized=file;ext=file.name.split('.').pop()?.toLowerCase()||'jpg'}}const path=`${user.id}/${crypto.randomUUID()}.${ext}`;const {error}=await supabase.storage.from('negin-uploads').upload(path,optimized,{contentType:optimized.type||file.type,upsert:false,cacheControl:'31536000'});if(error){setNotice(error.message);return null}return supabase.storage.from('negin-uploads').getPublicUrl(path).data.publicUrl}
- async function saveVehicle(e:React.FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);const payload={...draft,slug:draft.slug||slug(draft.name),year:draft.year?Number(draft.year):null,price:draft.price?Number(draft.price):null,engine_cc:draft.engine_cc?Number(draft.engine_cc):null,power_hp:draft.power_hp?Number(draft.power_hp):null,mileage:draft.mileage?Number(draft.mileage):null,sort_order:Number(draft.sort_order)||0,brand_id:draft.brand_id||null,category_id:draft.category_id||null,technical_specs:draft.technical_specs||[]};delete payload.id;delete payload.created_at;delete payload.updated_at;const result=editing?await supabase.from('vehicles').update(payload).eq('id',editing):await supabase.from('vehicles').insert(payload);setSaving(false);setNotice(result.error?.message||'خودرو ذخیره شد.');if(!result.error){setDraft(vehicleDefaults);setEditing(null);await load();setTab('vehicles')}}
+ async function upload(file:File){
+  const allowed=/^image\/(jpeg|png|webp|x-icon|vnd\.microsoft\.icon)$/;
+  if(!supabase||!allowed.test(file.type)||file.size>5*1024*1024){
+   setNotice('فقط تصویر JPG، PNG، WebP یا آیکن تا ۵ مگابایت مجاز است.');return null;
+  }
+  try{
+   const {data:userData,error:userError}=await supabase.auth.getUser();
+   if(userError)throw userError;
+   const user=userData.user;
+   if(!user){setNotice('نشست مدیر منقضی شده است؛ دوباره وارد شوید.');return null;}
+   let optimized:Blob=file;
+   let ext=file.type==='image/x-icon'||file.type==='image/vnd.microsoft.icon'?'ico':(file.name.split('.').pop()?.toLowerCase()||'jpg');
+   if(file.type!=='image/x-icon'&&file.type!=='image/vnd.microsoft.icon'){
+    try{
+     const bitmap=await createImageBitmap(file);
+     const scale=Math.min(1,1600/bitmap.width,1200/bitmap.height);
+     const canvas=document.createElement('canvas');
+     canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+     canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+     const ctx=canvas.getContext('2d');
+     if(ctx){
+      ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+      optimized=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('تصویر بهینه نشد.')),'image/webp',0.82));
+      ext='webp';
+     }
+     bitmap.close();
+    }catch(error){console.warn('[Negin Khodro] Image optimization skipped:',error);optimized=file;}
+   }
+   const path=`${user.id}/${crypto.randomUUID()}.${ext}`;
+   const {error}=await supabase.storage.from('negin-uploads').upload(path,optimized,{contentType:optimized.type||file.type,upsert:false,cacheControl:'31536000'});
+   if(error)throw error;
+   return supabase.storage.from('negin-uploads').getPublicUrl(path).data.publicUrl;
+  }catch(error){setNotice(`بارگذاری تصویر ناموفق بود: ${error instanceof Error?error.message:String(error)}`);return null;}
+ }
+ async function saveVehicle(e:React.FormEvent){
+  e.preventDefault();
+  if(!supabase)return;
+  if(!String(draft.name||'').trim()){setNotice('نام خودرو را وارد کنید.');return;}
+  setSaving(true);
+  try{
+   const payload={...draft,name:String(draft.name).trim(),slug:draft.slug||slug(draft.name),year:draft.year?Number(draft.year):null,price:draft.price?Number(draft.price):null,engine_cc:draft.engine_cc?Number(draft.engine_cc):null,power_hp:draft.power_hp?Number(draft.power_hp):null,mileage:draft.mileage?Number(draft.mileage):null,sort_order:Number(draft.sort_order)||0,brand_id:draft.brand_id||null,category_id:draft.category_id||null,technical_specs:draft.technical_specs||[],gallery_json:draft.gallery_json||[]};
+   delete payload.id;delete payload.created_at;delete payload.updated_at;
+   const result=editing?await supabase.from('vehicles').update(payload).eq('id',editing):await supabase.from('vehicles').insert(payload);
+   if(result.error)throw result.error;
+   setNotice('خودرو با موفقیت ذخیره شد.');
+   setDraft(vehicleDefaults);setEditing(null);await load();setTab('vehicles');
+  }catch(error){setNotice(`ذخیره خودرو ناموفق بود: ${error instanceof Error?error.message:String(error)}`);}
+  finally{setSaving(false);}
+ }
  async function removeVehicles(ids:string[]){if(!supabase||!ids.length||!confirm(`حذف ${ids.length} خودرو؟`))return;const {error}=await supabase.from('vehicles').delete().in('id',ids);setNotice(error?.message||'حذف انجام شد.');setSelected([]);await load()}
  async function saveSetting(key:string){if(!supabase)return;const {error}=await supabase.from('settings').upsert({key,value:settings[key],updated_at:new Date().toISOString()});setNotice(error?.message||'تنظیمات ذخیره شد.');if(!error)load()}
  async function saveAccount(e:React.FormEvent){e.preventDefault();if(!supabase||!session?.email)return;if(!currentPassword){setNotice('برای تغییر رمز، رمز فعلی را وارد کنید.');return}const {error:verify}=await supabase.auth.signInWithPassword({email:session.email,password:currentPassword});if(verify){setNotice('رمز فعلی نادرست است.');return}if(nextPassword.length<8){setNotice('رمز جدید باید حداقل ۸ نویسه باشد.');return}const {error}=await supabase.auth.updateUser({password:nextPassword});setNotice(error?.message||'رمز تغییر کرد.');setCurrentPassword('');setNextPassword('')}

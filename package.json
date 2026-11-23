@@ -6,10 +6,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "start": "node ./dist/server/entry.mjs",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/mdx": "4.3.7",
+    "@astrojs/node": "9.4.6",
     "@astrojs/react": "4.4.0",
     "@hookform/resolvers": "5.2.2",
     "@lucide/astro": "0.545.0",
@@ -39,7 +41,7 @@
     "@radix-ui/react-toggle": "1.1.10",
     "@radix-ui/react-toggle-group": "1.1.11",
     "@radix-ui/react-tooltip": "1.2.8",
-    "@supabase/supabase-js": "^2.49.1",
+    "@supabase/supabase-js": "2.119.2",
     "@tailwindcss/vite": "4.1.14",
     "@types/canvas-confetti": "1.9.0",
     "astro": "5.14.3",
@@ -67,5 +69,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.30"
+  },
+  "engines": {
+    "node": ">=22.16.0 <23"
   }
 }

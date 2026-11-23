@@ -49,14 +49,41 @@ const categories = [...new Set(vehicles.map((vehicle) => vehicle.category).filte
         const matchText = !text || (card.dataset.name || '').toLocaleLowerCase('fa').includes(text);
         const matchBrand = !values.brand || card.dataset.brand === values.brand;
         const matchCategory = !values.category || card.dataset.category === values.category;
-        const year = Number(card.dataset.year), price = Number(card.dataset.price) / 1000000, mileage = Number(card.dataset.mileage);
-        return matchText && matchBrand && matchCategory && (!values.year_from || year >= Number(values.year_from)) && (!values.year_to || year <= Number(values.year_to)) && (!values.price_from || price >= Number(values.price_from)) && (!values.price_to || price <= Number(values.price_to)) && (!values.status || card.dataset.status === values.status) && (!values.fuel || card.dataset.fuel === values.fuel) && (!values.transmission || card.dataset.transmission === values.transmission) && (!values.drivetrain || card.dataset.drivetrain === values.drivetrain) && (!values.condition || card.dataset.condition === values.condition) && (!values.mileage_from || mileage >= Number(values.mileage_from)) && (!values.mileage_to || mileage <= Number(values.mileage_to));
+        const year = Number(card.dataset.year);
+        const priceRaw = card.dataset.price || '';
+        const hasVisiblePrice = priceRaw !== '' && Number.isFinite(Number(priceRaw));
+        const price = hasVisiblePrice ? Number(priceRaw) / 1000000 : null;
+        const mileage = Number(card.dataset.mileage);
+        const hasPriceFilter = !!values.price_from || !!values.price_to;
+        return matchText && matchBrand && matchCategory &&
+          (!values.year_from || year >= Number(values.year_from)) &&
+          (!values.year_to || year <= Number(values.year_to)) &&
+          (!hasPriceFilter || (hasVisiblePrice &&
+            (!values.price_from || price! >= Number(values.price_from)) &&
+            (!values.price_to || price! <= Number(values.price_to)))) &&
+          (!values.status || card.dataset.status === values.status) &&
+          (!values.fuel || card.dataset.fuel === values.fuel) &&
+          (!values.transmission || card.dataset.transmission === values.transmission) &&
+          (!values.drivetrain || card.dataset.drivetrain === values.drivetrain) &&
+          (!values.condition || card.dataset.condition === values.condition) &&
+          (!values.mileage_from || mileage >= Number(values.mileage_from)) &&
+          (!values.mileage_to || mileage <= Number(values.mileage_to));
       });
       const sortMode = sort?.value || 'newest';
-      filtered.sort((a,b) => {
-        const key = sortMode.startsWith('price') ? 'price' : sortMode.startsWith('year') || sortMode === 'newest' ? 'year' : 'mileage';
-        const av = Number(a.dataset[key]);
-        const bv = Number(b.dataset[key]);
+      filtered.sort((a, b) => {
+        if (sortMode === 'newest') {
+          const aDate = Date.parse(a.dataset.createdAt || '') || 0;
+          const bDate = Date.parse(b.dataset.createdAt || '') || 0;
+          return bDate - aDate || Number(b.dataset.year) - Number(a.dataset.year);
+        }
+        const key = sortMode.startsWith('price') ? 'price' : sortMode.startsWith('year') ? 'year' : 'mileage';
+        const aRaw = a.dataset[key] || '';
+        const bRaw = b.dataset[key] || '';
+        const aHasValue = aRaw !== '' && Number.isFinite(Number(aRaw));
+        const bHasValue = bRaw !== '' && Number.isFinite(Number(bRaw));
+        if (key === 'price' && aHasValue !== bHasValue) return aHasValue ? -1 : 1;
+        const av = Number(aRaw);
+        const bv = Number(bRaw);
         if (sortMode === 'price-asc' || sortMode === 'year-asc' || sortMode === 'mileage-asc') return av - bv;
         return bv - av;
       });
@@ -70,7 +97,10 @@ const categories = [...new Set(vehicles.map((vehicle) => vehicle.category).filte
       const query = params.toString();
       history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
     };
-    controls.forEach((control) => control.addEventListener('input', apply));
+    controls.forEach((control) => {
+      control.addEventListener('input', apply);
+      control.addEventListener('change', apply);
+    });
     sort?.addEventListener('change', apply);
     document.querySelector('[data-apply-filters]')?.addEventListener('click', apply);
     apply();

@@ -2,7 +2,7 @@
 import { formatVehiclePrice } from '../lib/public-vehicles';
 const { vehicle, featured = false } = Astro.props;
 ---
-<article class="vehicle-card" data-vehicle-card data-name={`${vehicle.name} ${vehicle.model} ${vehicle.trim}`} data-brand={vehicle.brand} data-category={vehicle.category} data-year={vehicle.year} data-price={vehicle.price} data-status={vehicle.status} data-fuel={vehicle.fuel} data-transmission={vehicle.transmission} data-drivetrain={vehicle.drivetrain} data-condition={vehicle.condition} data-mileage={vehicle.mileage}>
+<article class="vehicle-card" data-vehicle-card data-name={`${vehicle.name} ${vehicle.model} ${vehicle.trim}`} data-brand={vehicle.brand} data-category={vehicle.category} data-year={vehicle.year} data-price={vehicle.price_visible ? vehicle.price : ''} data-created-at={vehicle.created_at || ''} data-status={vehicle.status} data-fuel={vehicle.fuel} data-transmission={vehicle.transmission} data-drivetrain={vehicle.drivetrain} data-condition={vehicle.condition} data-mileage={vehicle.mileage}>
   <a class="vehicle-card-image" href={`/vehicle/${vehicle.slug}/`} aria-label={`مشاهده مشخصات ${vehicle.name}`}>
     <img src={vehicle.image} alt={`${vehicle.name} ${vehicle.model}، ${vehicle.color}`} loading="lazy" decoding="async" width="1264" height="848" />
     {(featured || vehicle.badge) && <span class="card-badge">{vehicle.badge || 'خودروی منتخب'}</span>}
