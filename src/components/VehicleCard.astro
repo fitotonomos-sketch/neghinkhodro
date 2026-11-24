@@ -1,16 +1,84 @@
 ---
 import { formatVehiclePrice } from '../lib/public-vehicles';
+
 const { vehicle, featured = false } = Astro.props;
+const title = [vehicle.name, vehicle.model].filter(Boolean).join(' ');
+const imageAlt = vehicle.image_alt || `${title}، نمای بیرونی ${vehicle.color || ''}`;
+const mileage = Number(vehicle.mileage || 0);
+const price = formatVehiclePrice(vehicle.price, vehicle.price_visible);
+const shortSpecs = [
+  mileage ? `${mileage.toLocaleString('fa-IR')} کیلومتر` : 'کارکرد نامشخص',
+  vehicle.transmission || 'گیربکس نامشخص',
+  vehicle.fuel || 'سوخت نامشخص',
+];
 ---
-<article class="vehicle-card" data-vehicle-card data-name={`${vehicle.name} ${vehicle.model} ${vehicle.trim}`} data-brand={vehicle.brand} data-category={vehicle.category} data-year={vehicle.year} data-price={vehicle.price_visible ? vehicle.price : ''} data-created-at={vehicle.created_at || ''} data-status={vehicle.status} data-fuel={vehicle.fuel} data-transmission={vehicle.transmission} data-drivetrain={vehicle.drivetrain} data-condition={vehicle.condition} data-mileage={vehicle.mileage}>
-  <a class="vehicle-card-image" href={`/vehicle/${vehicle.slug}/`} aria-label={`مشاهده مشخصات ${vehicle.name}`}>
-    <img src={vehicle.image} alt={`${vehicle.name} ${vehicle.model}، ${vehicle.color}`} loading="lazy" decoding="async" width="1264" height="848" />
-    {(featured || vehicle.badge) && <span class="card-badge">{vehicle.badge || 'خودروی منتخب'}</span>}
+
+<article
+  class:list={['vehicle-card', { 'vehicle-card-featured': featured }]}
+  data-vehicle-card
+  data-name={`${vehicle.name || ''} ${vehicle.model || ''} ${vehicle.trim || ''}`}
+  data-brand={vehicle.brand || ''}
+  data-category={vehicle.category || ''}
+  data-year={vehicle.year || ''}
+  data-price={vehicle.price_visible ? vehicle.price : ''}
+  data-created-at={vehicle.created_at || ''}
+  data-status={vehicle.status || ''}
+  data-fuel={vehicle.fuel || ''}
+  data-transmission={vehicle.transmission || ''}
+  data-drivetrain={vehicle.drivetrain || ''}
+  data-condition={vehicle.condition || ''}
+  data-mileage={vehicle.mileage || 0}
+>
+  <a class="vehicle-card-image" href={`/vehicle/${vehicle.slug}/`} aria-label={`مشاهده مشخصات ${title}`}>
+    <img
+      src={vehicle.image}
+      alt={imageAlt}
+      loading="lazy"
+      decoding="async"
+      width="1264"
+      height="848"
+    />
+    <span class="card-image-shade" aria-hidden="true"></span>
+    {(featured || vehicle.badge) && (
+      <span class="card-badge">{vehicle.badge || 'انتخاب ویژه نگین'}</span>
+    )}
+    {vehicle.status && <span class="card-status">{vehicle.status}</span>}
+    <span class="card-image-action" aria-hidden="true">مشاهده خودرو <span>←</span></span>
   </a>
+
   <div class="card-body">
-    <div class="card-title-row"><h3><a href={`/vehicle/${vehicle.slug}/`}>{vehicle.name}</a></h3><span class="card-year">{vehicle.year}</span></div>
-    <p class="card-trim">{vehicle.trim}</p>
-    <div class="card-specs" aria-label="مشخصات کوتاه"><span>{vehicle.mileage.toLocaleString('fa-IR')} کیلومتر</span><span>{vehicle.transmission}</span><span>{vehicle.fuel}</span></div>
-    <div class="card-footer"><div class="card-price">{formatVehiclePrice(vehicle.price, vehicle.price_visible)} {vehicle.price_visible && vehicle.price > 0 && <small>تومان</small>}</div><a class="card-arrow" href={`/vehicle/${vehicle.slug}/`} aria-label={`جزئیات ${vehicle.name}`}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></a></div>
+    <div class="card-title-row">
+      <div class="card-title-group">
+        <h3><a href={`/vehicle/${vehicle.slug}/`}>{vehicle.name}</a></h3>
+        {vehicle.model && <span class="card-model">{vehicle.model}</span>}
+      </div>
+      {vehicle.year && <span class="card-year">{Number(vehicle.year).toLocaleString('fa-IR')}</span>}
+    </div>
+
+    {vehicle.trim && <p class="card-trim">{vehicle.trim}</p>}
+
+    <div class="card-specs" aria-label="مشخصات کوتاه خودرو">
+      {shortSpecs.map((item) => <span>{item}</span>)}
+    </div>
+
+    <div class="card-footer">
+      <div class="card-price-wrap">
+        <span class="card-price-label">قیمت خودرو</span>
+        <div class="card-price">
+          {price}
+          {vehicle.price_visible && Number(vehicle.price) > 0 && <small>تومان</small>}
+        </div>
+      </div>
+      <a
+        class="card-arrow"
+        href={`/vehicle/${vehicle.slug}/`}
+        aria-label={`جزئیات ${title}`}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M19 12H5m7 7-7-7 7-7" />
+        </svg>
+      </a>
+    </div>
   </div>
 </article>
+  
