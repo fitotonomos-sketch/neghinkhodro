@@ -1,3 +1,4 @@
+
 ---
 export const prerender = false;
 
@@ -17,9 +18,14 @@ if (!vehicle) {
 }
 
 const allVehicles = vehicle ? await getPublicVehicles() : [];
+
 const related = vehicle
   ? allVehicles
-      .filter((item) => item.brand === vehicle.brand && item.slug !== vehicle.slug)
+      .filter(
+        (item) =>
+          item.brand === vehicle.brand &&
+          item.slug !== vehicle.slug
+      )
       .slice(0, 3)
   : [];
 
@@ -29,30 +35,75 @@ const faNumber = (value: unknown) =>
     : Number(value).toLocaleString('fa-IR');
 
 const display = (value: unknown) =>
-  value === null || value === undefined || String(value).trim() === ''
+  value === null ||
+  value === undefined ||
+  String(value).trim() === ''
     ? '—'
     : String(value);
 
-const specs = vehicle
+const makeSpecs = (items: Array<[string, unknown]>) =>
+  items
+    .map(([label, value]) => ({
+      label,
+      value: display(value),
+    }))
+    .filter((item) => item.value !== '—');
+
+const specGroups = vehicle
   ? [
-      ['برند', display(vehicle.brand)],
-      ['مدل', display(vehicle.model)],
-      ['سال ساخت', faNumber(vehicle.year)],
-      ['کارکرد', vehicle.mileage ? `${faNumber(vehicle.mileage)} کیلومتر` : '—'],
-      ['نوع موتور', display(vehicle.engine)],
-      ['قدرت موتور', display(vehicle.power)],
-      ['نوع سوخت', display(vehicle.fuel)],
-      ['گیربکس', display(vehicle.transmission)],
-      ['محور محرک', display(vehicle.drivetrain)],
-      ['رنگ بدنه', display(vehicle.color)],
-      ['وضعیت خودرو', display(vehicle.status)],
-      ['دسته‌بندی', display(vehicle.category)],
-    ]
+      {
+        title: 'مشخصات شناسایی',
+        english: 'VEHICLE IDENTITY',
+        items: makeSpecs([
+          ['برند', vehicle.brand],
+          ['مدل', vehicle.model],
+          ['تیپ', vehicle.trim],
+          [
+            'سال ساخت',
+            vehicle.year ? faNumber(vehicle.year) : null,
+          ],
+          ['دسته‌بندی', vehicle.category],
+          ['وضعیت', vehicle.status],
+          ['شرایط خودرو', vehicle.condition],
+        ]),
+      },
+      {
+        title: 'پیشرانه و عملکرد',
+        english: 'POWERTRAIN',
+        items: makeSpecs([
+          ['حجم موتور', vehicle.engine],
+          ['قدرت موتور', vehicle.power],
+          ['نوع سوخت', vehicle.fuel],
+          ['گیربکس', vehicle.transmission],
+          ['محور محرک', vehicle.drivetrain],
+        ]),
+      },
+      {
+        title: 'بدنه و کابین',
+        english: 'EXTERIOR & INTERIOR',
+        items: makeSpecs([
+          ['رنگ بدنه', vehicle.color],
+          ['رنگ کابین', vehicle.interior_color],
+          [
+            'کارکرد',
+            vehicle.mileage !== null &&
+            vehicle.mileage !== undefined &&
+            vehicle.mileage !== ''
+              ? `${faNumber(vehicle.mileage)} کیلومتر`
+              : null,
+          ],
+        ]),
+      },
+    ].filter((group) => group.items.length > 0)
   : [];
 
 const technicalSpecs = vehicle?.technical_specs || [];
 const gallery = vehicle?.gallery || [];
-const vehicleTitle = vehicle ? [vehicle.name, vehicle.model].filter(Boolean).join(' ') : '';
+
+const vehicleTitle = vehicle
+  ? [vehicle.name, vehicle.model].filter(Boolean).join(' ')
+  : '';
+
 const priceText = vehicle
   ? formatVehiclePrice(vehicle.price, vehicle.price_visible)
   : '';
@@ -67,15 +118,23 @@ const priceText = vehicle
       <div class="container empty-state">
         <span class="eyebrow">VEHICLE NOT FOUND</span>
         <h1>این خودرو در دسترس نیست</h1>
-        <p>ممکن است خودرو فروخته شده یا از فهرست موجودی خارج شده باشد.</p>
-        <a class="button" href="/vehicles/">بازگشت به فهرست خودروها</a>
+        <p>
+          ممکن است خودرو فروخته شده یا از فهرست موجودی خارج شده باشد.
+        </p>
+        <a class="button" href="/vehicles/">
+          بازگشت به فهرست خودروها
+        </a>
       </div>
     </section>
   </SiteLayout>
 ) : (
   <SiteLayout
     title={`${vehicle.seo_title || vehicleTitle} | نگین خودرو`}
-    description={vehicle.meta_description || vehicle.description}
+    description={
+      vehicle.meta_description ||
+      vehicle.description ||
+      'مشاهده مشخصات و جزئیات خودرو در نگین خودرو.'
+    }
   >
     <script
       type="application/ld+json"
@@ -83,40 +142,63 @@ const priceText = vehicle
         '@context': 'https://schema.org',
         '@type': 'Vehicle',
         name: vehicleTitle,
-        brand: { '@type': 'Brand', name: vehicle.brand },
-        vehicleModelDate: String(vehicle.year || ''),
-        image: vehicle.image,
-        description: vehicle.description,
-        mileageFromOdometer: {
-          '@type': 'QuantitativeValue',
-          value: vehicle.mileage,
-          unitCode: 'KMT',
+        brand: {
+          '@type': 'Brand',
+          name: vehicle.brand,
         },
-        fuelType: vehicle.fuel,
-        vehicleTransmission: vehicle.transmission,
-        color: vehicle.color,
-        vehicleConfiguration: vehicle.trim,
-        category: vehicle.category,
+        vehicleModelDate: vehicle.year
+          ? String(vehicle.year)
+          : undefined,
+        image: vehicle.image || undefined,
+        description: vehicle.description || undefined,
+        mileageFromOdometer:
+          vehicle.mileage !== null &&
+          vehicle.mileage !== undefined &&
+          vehicle.mileage !== ''
+            ? {
+                '@type': 'QuantitativeValue',
+                value: vehicle.mileage,
+                unitCode: 'KMT',
+              }
+            : undefined,
+        fuelType: vehicle.fuel || undefined,
+        vehicleTransmission: vehicle.transmission || undefined,
+        color: vehicle.color || undefined,
+        vehicleConfiguration: vehicle.trim || undefined,
+        category: vehicle.category || undefined,
       })
         .replace(/</g, '\\u003c')
         .replace(/>/g, '\\u003e')
         .replace(/&/g, '\\u0026')}
     />
 
-    <section class="page-hero vehicle-page-hero" id="vehicle-overview" aria-labelledby="vehicle-title">
+    <section
+      class="page-hero vehicle-page-hero"
+      id="vehicle-overview"
+      aria-labelledby="vehicle-title"
+    >
       <div class="container">
         <nav class="breadcrumbs" aria-label="مسیر صفحه">
-          <a href="/">خانه</a><span>/</span>
-          <a href="/vehicles/">خودروها</a><span>/</span>
+          <a href="/">خانه</a>
+          <span>/</span>
+          <a href="/vehicles/">خودروها</a>
+          <span>/</span>
           <span aria-current="page">{vehicle.name}</span>
         </nav>
 
         <div class="vehicle-heading-layout">
           <div class="page-heading">
-            <div class="eyebrow">NEGIN KHODRO · VEHICLE COLLECTION</div>
-            <h1 id="vehicle-title">{vehicle.name} {vehicle.model}</h1>
+            <div class="eyebrow">
+              NEGIN KHODRO · VEHICLE COLLECTION
+            </div>
+
+            <h1 id="vehicle-title">
+              {vehicle.name} {vehicle.model}
+            </h1>
+
             {vehicle.trim && <p>{vehicle.trim}</p>}
           </div>
+
           {vehicle.year && (
             <div class="vehicle-year-mark">
               <span>MODEL YEAR</span>
@@ -127,24 +209,37 @@ const priceText = vehicle
       </div>
     </section>
 
-    <section class="section vehicle-detail-section" id="vehicle-details" aria-labelledby="vehicle-title">
+    <section
+      class="section vehicle-detail-section"
+      id="vehicle-details"
+      aria-labelledby="vehicle-title"
+    >
       <div class="container detail-grid">
         <main class="detail-main">
           <div class="detail-media-shell">
             <div class="detail-photo">
               <img
                 src={vehicle.image}
-                alt={vehicle.image_alt || `${vehicleTitle}، نمای بیرونی ${vehicle.color || ''}`}
+                alt={
+                  vehicle.image_alt ||
+                  `${vehicleTitle}، نمای بیرونی ${vehicle.color || ''}`
+                }
                 width="1264"
                 height="848"
                 fetchpriority="high"
                 decoding="async"
               />
-              <span class="detail-photo-caption">NEGIN KHODRO / VEHICLE SHOWCASE</span>
+
+              <span class="detail-photo-caption">
+                NEGIN KHODRO / VEHICLE SHOWCASE
+              </span>
             </div>
 
             {gallery.length > 0 && (
-              <div class="vehicle-gallery" aria-label="گالری تصاویر خودرو">
+              <div
+                class="vehicle-gallery"
+                aria-label="گالری تصاویر خودرو"
+              >
                 {gallery.map((image, index) => (
                   <a
                     href={image}
@@ -164,92 +259,177 @@ const priceText = vehicle
             )}
           </div>
 
-          <section class="section-tight vehicle-spec-section" id="vehicle-specifications" aria-labelledby="specifications-title">
+          <section
+            class="section-tight vehicle-spec-section"
+            id="vehicle-specifications"
+            aria-labelledby="specifications-title"
+          >
             <div class="section-heading">
               <div>
-                <div class="eyebrow">VEHICLE SPECIFICATIONS</div>
-                <h2 id="specifications-title">مشخصات خودرو</h2>
-                <p>اطلاعات اصلی و جزئیات فنی این خودرو</p>
+                <div class="eyebrow">
+                  VEHICLE SPECIFICATIONS
+                </div>
+                <h2 id="specifications-title">
+                  مشخصات خودرو
+                </h2>
+                <p>
+                  اطلاعات شناسایی، پیشرانه، عملکرد و جزئیات بدنه خودرو
+                </p>
               </div>
             </div>
 
-            <div class="spec-table">
-              {specs.map(([label, value]) => (
-                <div class="spec-item">
-                  <span>{label}</span>
-                  <strong>{value}</strong>
-                </div>
+            <div class="spec-groups">
+              {specGroups.map((group) => (
+                <section
+                  class="spec-group"
+                  aria-label={group.title}
+                >
+                  <header class="spec-group-heading">
+                    <h3>{group.title}</h3>
+                    <span>{group.english}</span>
+                  </header>
+
+                  <div class="spec-group-grid">
+                    {group.items.map((item) => (
+                      <div class="spec-item">
+                        <span>{item.label}</span>
+                        <strong>{item.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           </section>
 
-          <section class="content-block vehicle-description-block" id="vehicle-description" aria-labelledby="description-title">
+          <section
+            class="content-block vehicle-description-block"
+            id="vehicle-description"
+            aria-labelledby="description-title"
+          >
             <div class="eyebrow">ABOUT THIS VEHICLE</div>
-            <h2 id="description-title">درباره این خودرو</h2>
-            <p>{vehicle.description || 'برای دریافت توضیحات تکمیلی این خودرو با کارشناسان نگین خودرو تماس بگیرید.'}</p>
+
+            <h2 id="description-title">
+              درباره این خودرو
+            </h2>
+
             <p>
-              برای دریافت گزارش کارشناسی، هماهنگی بازدید یا آگاهی از جزئیات بیشتر،
-              مشاوران نگین خودرو آماده پاسخ‌گویی هستند.
+              {vehicle.description ||
+                'برای دریافت توضیحات تکمیلی این خودرو با کارشناسان نگین خودرو تماس بگیرید.'}
+            </p>
+
+            <p>
+              برای دریافت گزارش کارشناسی، هماهنگی بازدید یا آگاهی
+              از جزئیات بیشتر، مشاوران نگین خودرو آماده پاسخ‌گویی هستند.
             </p>
           </section>
 
           {technicalSpecs.length > 0 && (
-            <section class="section-tight technical-spec-section" aria-labelledby="technical-title">
+            <section
+              class="section-tight technical-spec-section"
+              aria-labelledby="technical-title"
+            >
               <div class="section-heading">
                 <div>
-                  <div class="eyebrow">TECHNICAL DETAILS</div>
-                  <h2 id="technical-title">جزئیات فنی تکمیلی</h2>
+                  <div class="eyebrow">
+                    TECHNICAL DETAILS
+                  </div>
+                  <h2 id="technical-title">
+                    جزئیات فنی تکمیلی
+                  </h2>
                 </div>
               </div>
-              <div class="spec-table technical-spec-table">
-                {technicalSpecs.map((item) => (
-                  <div class="spec-item">
-                    <span>{display(item.key)}</span>
-                    <strong>{display(item.value)}</strong>
+
+              <div class="spec-groups">
+                <section class="spec-group">
+                  <header class="spec-group-heading">
+                    <h3>اطلاعات فنی ثبت‌شده</h3>
+                    <span>ADDITIONAL FEATURES</span>
+                  </header>
+
+                  <div class="spec-group-grid">
+                    {technicalSpecs.map((item) => (
+                      <div class="spec-item">
+                        <span>{display(item.key)}</span>
+                        <strong>{display(item.value)}</strong>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </section>
               </div>
             </section>
           )}
         </main>
 
-        <aside class="detail-summary" aria-label="خلاصه و درخواست مشاوره خودرو">
+        <aside
+          class="detail-summary"
+          aria-label="خلاصه و درخواست مشاوره خودرو"
+        >
           <div class="summary-topline">
-            <span class="summary-kicker">NEGIN SELECTED</span>
-            {vehicle.status && <span class="summary-status">{vehicle.status}</span>}
+            <span class="summary-kicker">
+              NEGIN SELECTED
+            </span>
+
+            {vehicle.status && (
+              <span class="summary-status">
+                {vehicle.status}
+              </span>
+            )}
           </div>
 
           <h2>{vehicle.name} {vehicle.model}</h2>
-          {vehicle.trim && <p class="detail-trim">{vehicle.trim}</p>}
+
+          {vehicle.trim && (
+            <p class="detail-trim">{vehicle.trim}</p>
+          )}
 
           <div class="detail-price-block">
             <span>قیمت اعلامی</span>
+
             <div class="detail-price">
               {priceText}
-              {vehicle.price_visible && Number(vehicle.price) > 0 && <small>تومان</small>}
+
+              {vehicle.price_visible &&
+                Number(vehicle.price) > 0 && (
+                  <small>تومان</small>
+                )}
             </div>
           </div>
 
           <div class="summary-stat">
             <span>کارکرد</span>
-            <strong>{vehicle.mileage ? `${faNumber(vehicle.mileage)} کیلومتر` : 'اعلام نشده'}</strong>
+            <strong>
+              {vehicle.mileage !== null &&
+              vehicle.mileage !== undefined &&
+              vehicle.mileage !== ''
+                ? `${faNumber(vehicle.mileage)} کیلومتر`
+                : 'اعلام نشده'}
+            </strong>
           </div>
+
           <div class="summary-stat">
             <span>سال ساخت</span>
             <strong>{faNumber(vehicle.year)}</strong>
           </div>
+
           <div class="summary-stat">
             <span>گیربکس</span>
             <strong>{display(vehicle.transmission)}</strong>
           </div>
+
           <div class="summary-stat">
             <span>سوخت</span>
             <strong>{display(vehicle.fuel)}</strong>
           </div>
 
-          <a class="button summary-primary-action" href="/#contact-inquiry">
-            درخواست مشاوره و بازدید <span aria-hidden="true">←</span>
+          <a
+            class="button summary-primary-action"
+            href="/#contact-inquiry"
+          >
+            درخواست مشاوره و بازدید
+            <span aria-hidden="true">←</span>
           </a>
+
           <a
             class="button button-outline summary-secondary-action"
             href="/contact/"
@@ -261,8 +441,10 @@ const priceText = vehicle
           </a>
 
           <p class="form-help">
-            قیمت نهایی و شرایط معامله پس از هماهنگی با مشاور فروش اعلام می‌شود.
+            قیمت نهایی و شرایط معامله پس از هماهنگی با مشاور فروش
+            اعلام می‌شود.
           </p>
+
           <div class="summary-trust-note">
             <span aria-hidden="true">✦</span>
             همراهی تخصصی در انتخاب و خرید خودرو
@@ -272,18 +454,37 @@ const priceText = vehicle
     </section>
 
     {related.length > 0 && (
-      <section class="section related-vehicles-section" id="related-vehicles" aria-labelledby="related-title">
+      <section
+        class="section related-vehicles-section"
+        id="related-vehicles"
+        aria-labelledby="related-title"
+      >
         <div class="container">
           <div class="section-heading">
             <div>
-              <div class="eyebrow">YOU MAY ALSO LIKE</div>
-              <h2 id="related-title">خودروهای مشابه</h2>
-              <p>گزینه‌های دیگری از همین برند برای بررسی بیشتر</p>
+              <div class="eyebrow">
+                YOU MAY ALSO LIKE
+              </div>
+
+              <h2 id="related-title">
+                خودروهای مشابه
+              </h2>
+
+              <p>
+                گزینه‌های دیگری از همین برند برای بررسی بیشتر
+              </p>
             </div>
-            <a class="text-link" href="/vehicles/">مشاهده همه خودروها <span aria-hidden="true">←</span></a>
+
+            <a class="text-link" href="/vehicles/">
+              مشاهده همه خودروها
+              <span aria-hidden="true">←</span>
+            </a>
           </div>
+
           <div class="vehicle-grid">
-            {related.map((item) => <VehicleCard vehicle={item} />)}
+            {related.map((item) => (
+              <VehicleCard vehicle={item} />
+            ))}
           </div>
         </div>
       </section>
