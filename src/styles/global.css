@@ -372,345 +372,257 @@ body { color: #171a1d; background-color: #c8ccd0 !important; }
 /* NEGIN KHODRO — PREMIUM LUXURY LIGHT THEME */
 
 :root {
-  color-scheme: light;
-  --background: #F7F5F0;
-  --foreground: #30343A;
-  --card: #FFFFFF;
-  --card-foreground: #30343A;
-  --popover: #FFFFFF;
-  --popover-foreground: #30343A;
-  --primary: #C6A66B;
-  --primary-foreground: #292923;
-  --secondary: #E8E1D5;
-  --secondary-foreground: #30343A;
-  --muted: #EEEAE2;
-  --muted-foreground: #73777B;
-  --accent: #E8E1D5;
-  --accent-foreground: #30343A;
-  --destructive: #B94D45;
-  --border: #E5E0D7;
-  --input: #DAD5CB;
-  --ring: #C6A66B;
-  --gold: #B18B4D;
-  --paper: #30343A;
-  --quiet: #73777B;
-  --panel: #FFFFFF;
-}
-
-@layer base {
-  body {
-    color: var(--foreground);
-    background: var(--background);
-  }
+  --quiet: #565d63;
+  --gold: #c5a46d;
 }
 
 body {
-  background: #F7F5F0 !important;
-  color: #30343A;
+  font-size: 15px;
+  line-height: 1.85;
+  background: linear-gradient(135deg,#c8ccd0 0%,#d3d6d8 48%,#bcc2c7 100%) !important;
+  color: #191c1f;
 }
 
-/* Header */
-.site-header {
-  background: rgba(255,255,255,.94);
-  color: #30343A;
-  border-bottom: 1px solid #E8E2D8;
-  box-shadow: 0 5px 24px rgba(48,52,58,.045);
-  backdrop-filter: blur(16px);
-}
-.brand-name { color: #30343A; }
-.brand-subtitle { color: #85827B; }
-.brand-mark {
-  color: #A98548;
-  border-color: #D9C49E;
-  background: #FBF8F1;
-}
-.main-nav { color: #555A5E; }
-.main-nav a:hover { color: #A98548; }
-.header-phone { color: #98743D; }
-.header-search, .mobile-menu {
-  color: #45494D;
-  border-color: #E4DED4;
-  background: #FBFAF7;
+.section-heading p,
+.page-heading p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #41484e;
 }
 
-/* Hero */
-.hero { background: #E9E4DA; }
-.hero::before {
-  background:
-    linear-gradient(90deg,
-      rgba(247,245,240,.97) 0%,
-      rgba(247,245,240,.88) 34%,
-      rgba(247,245,240,.28) 72%,
-      rgba(247,245,240,.08) 100%),
-    linear-gradient(0deg,rgba(247,245,240,.72),transparent 24%);
-}
-.hero-copy, .hero h1 { color: #30343A; }
-.hero h1 em { color: #A98548; }
-.hero p { color: #555A5E; }
-.eyebrow { color: #98743D; }
-.eyebrow::before { background: #C6A66B; }
-.hero-meta { color: #555A5E; }
-.hero-meta div { border-color: #D5CBB9; }
-.hero-meta strong { color: #98743D; }
-.hero-meta span { color: #73777B; }
+.eyebrow { font-size: 12px; }
+.main-nav { font-size: 14px; }
+.brand-name { font-size: 18px; }
+.brand-subtitle { font-size: 10px; }
+.hero p { font-size: 16px; }
+.button { font-size: 14px; }
 
-/* Buttons */
-.button {
-  color: #292923;
-  background: linear-gradient(135deg,#D8BD89,#B9955A);
-  border-color: #B9955A;
-  box-shadow: 0 5px 14px rgba(177,139,77,.14);
-}
-.button:hover {
-  color: #292923;
-  background: linear-gradient(135deg,#E4CCA0,#C6A66B);
-  border-color: #C6A66B;
-}
-.button-outline {
-  color: #45494D;
-  background: rgba(255,255,255,.55);
-  border-color: #C9C2B6;
-  box-shadow: none;
-}
+.card-title-row h3 { font-size: 18px; }
+.card-year, .card-trim { font-size: 13px; }
+.card-specs span { font-size: 12px; }
+.card-price { font-size: 15px; }
 
-/* Sections */
-.section, .section-tight { color: #30343A; }
-.section-heading h2, .page-heading h1 { color: #30343A; }
-.section-heading p, .page-heading p { color: #73777B; }
-.text-link { color: #98743D; }
-.text-link:hover { color: #745528; }
+.category-tile strong { font-size: 16px; }
+.category-tile small { font-size: 12px; }
 
-/* Vehicle cards */
+.footer-intro, .footer-links { font-size: 13px; }
+
 .vehicle-card {
-  color: #30343A;
-  background: #FFFFFF;
-  border: 1px solid #E8E2D8;
-  box-shadow: 0 9px 28px rgba(48,52,58,.055);
-  transition: transform .22s ease, box-shadow .22s ease;
+  border-color: #353a3e;
+  box-shadow: 0 12px 28px rgba(20,24,27,.16);
+  transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
 }
+
 .vehicle-card:hover {
-  transform: translateY(-4px);
-  border-color: #D7C49F;
-  box-shadow: 0 16px 36px rgba(48,52,58,.10);
+  transform: translateY(-5px);
+  border-color: #9c8155;
+  box-shadow: 0 18px 36px rgba(20,24,27,.23);
 }
-.vehicle-card-image { background: #EAE7E1; }
-.card-badge {
-  color: #80602F;
-  background: rgba(255,255,255,.94);
-  border-color: #D8C39B;
+
+.card-body { padding: 21px; }
+
+.card-specs {
+  padding-block: 14px;
+  border-color: #45443f;
 }
-.card-title-row h3 { color: #30343A; }
-.card-year, .card-trim { color: #777B7E; }
-.card-specs { border-color: #EAE5DC; }
+
 .card-specs span {
-  color: #686D71;
-  border-color: #EAE5DC;
-}
-.card-price { color: #98743D; }
-.card-price small { color: #85827B; }
-.card-arrow {
-  color: #98743D;
-  border-color: #E2D7C4;
-  background: #FBF9F4;
+  color: #dedbd4;
+  border-color: #45443f;
 }
 
-/* Categories */
-.category-tile {
-  color: #30343A;
-  background: linear-gradient(145deg,#FFFFFF,#F1EDE5);
-  border-color: #E5DED2;
-  box-shadow: 0 7px 20px rgba(48,52,58,.035);
-}
-.category-tile:hover { border-color: #C6A66B; }
-.category-tile strong { color: #30343A; }
-.category-tile small { color: #777B7E; }
-.category-symbol {
-  color: #A98548;
-  border-color: #E0D1B4;
-  background: #FBF8F1;
+/* VEHICLE SPECIFICATIONS */
+
+.vehicle-spec-section {
+  padding-top: 54px;
 }
 
-/* Intro and contact */
-.intro-band {
-  color: #30343A;
-  background: linear-gradient(120deg,#F0ECE4,#FAF9F6);
-  border-block-color: #E5DED2;
-}
-.intro-band h2 { color: #30343A; }
-.intro-copy { color: #656A6E; }
-.summary-stat { border-color: #E1DBD1; }
-.summary-stat span, .stats-inline span { color: #777B7E; }
-.stats-inline strong { color: #98743D; }
-.contact-banner {
-  color: #30343A;
-  background: linear-gradient(110deg,#E9DFC9,#D8C39B);
-}
-.contact-banner .button {
-  color: #F8F6F1;
-  background: #34383D;
-  border-color: #34383D;
+.vehicle-spec-section .section-heading {
+  margin-bottom: 22px;
 }
 
-/* Footer */
-.site-footer {
-  color: #EDEAE3;
-  background: #30343A;
-  border-top-color: #454A50;
-}
-.footer-heading { color: #F7F5F0; }
-.footer-intro, .footer-links { color: #C4C5C4; }
-.footer-bottom {
-  color: #AEB1B2;
-  border-top-color: #4A4E53;
+.spec-groups {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 16px;
+  margin-top: 24px;
 }
 
-/* Inner pages */
-.page-hero {
-  color: #30343A;
-  background: radial-gradient(ellipse at 80% 0%,#FFFFFF 0%,#F0ECE4 68%);
-  border-bottom-color: #E5DED2;
+.spec-group {
+  min-width: 0;
+  padding: 21px;
+  color: #f4f0e8;
+  background:
+    radial-gradient(ellipse at top right,rgba(197,164,109,.12),transparent 48%),
+    linear-gradient(145deg,#242729,#17191b);
+  border: 1px solid #424448;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(25,28,31,.14);
 }
-.breadcrumbs { color: #85827B; }
-.page-heading h1 { color: #30343A; }
-.page-heading p { color: #686D71; }
 
-/* Filters, vehicle details and forms */
-.filters-panel, .detail-summary, .inquiry-section {
-  color: #30343A;
-  background: #FFFFFF;
-  border-color: #E5DED2;
-  box-shadow: 0 8px 24px rgba(48,52,58,.045);
+.spec-group-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 0 14px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #45413a;
 }
-.filters-heading { border-color: #EAE5DC; }
-.filters-heading h2,
-.detail-summary h2,
-.inquiry-section h2 { color: #30343A; }
-.filter-group label, .inquiry-form label { color: #5F6468; }
 
-.filter-control, .sort-select,
-.inquiry-form input,
-.inquiry-form textarea,
-.inquiry-form select {
-  color: #30343A;
-  background: #FBFAF7;
-  border-color: #DED8CE;
+.spec-group-heading::before {
+  content: "";
+  display: block;
+  width: 4px;
+  height: 23px;
+  flex: 0 0 4px;
+  border-radius: 5px;
+  background: linear-gradient(180deg,#e0c58f,#9b7946);
 }
-.filter-control::placeholder { color: #99958D; }
-.results-count { color: #73777B; }
-.results-count strong { color: #30343A; }
-.empty-state { color: #73777B; border-color: #D8D1C5; }
-.empty-state h3 { color: #30343A; }
 
-.detail-photo {
-  background: #EAE7E1;
-  border-color: #E5DED2;
+.spec-group-heading h3 {
+  margin: 0;
+  color: #e4c991;
+  font-size: 15px;
+  font-weight: 700;
 }
-.detail-summary .detail-trim { color: #777B7E; }
-.detail-price {
-  color: #98743D;
-  border-bottom-color: #EAE5DC;
-}
-.detail-price small { color: #85827B; }
-.spec-table { border-color: #E5DED2; }
-.spec-item { border-color: #E5DED2; }
-.spec-item:nth-child(odd) { border-left-color: #E5DED2; }
-.spec-item span { color: #85827B; }
-.spec-item strong { color: #30343A; }
-.content-block { color: #555A5E; }
-.content-block h2 { color: #30343A; }
-.inquiry-section > p, .form-help { color: #777B7E; }
 
-/* Floating actions */
-.floating-actions .float-button {
-  color: #8D6A35;
-  background: rgba(255,255,255,.96);
-  border-color: #D8C39B;
-  box-shadow: 0 8px 24px rgba(48,52,58,.14);
+.spec-group-heading span {
+  margin-right: auto;
+  color: #9fa3a5;
+  font-size: 10px;
+  direction: ltr;
 }
-.floating-actions .float-button:hover {
+
+.spec-group-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 9px;
+}
+
+.spec-group .spec-item {
+  min-width: 0;
+  min-height: 68px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 12px;
+  border: 1px solid #3a3e41;
+  border-radius: 9px;
+  background: rgba(255,255,255,.035);
+}
+
+.spec-group .spec-item span {
+  color: #b7b9b8;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.spec-group .spec-item strong {
   color: #fff;
-  background: #B9955A;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
-/* Admin panel — light and readable */
-.admin-shell {
-  color: #30343A;
-  background: radial-gradient(ellipse at top right,#FFFFFF 0,#F2EEE6 58%);
-}
-.admin-login, .admin-card {
-  color: #30343A;
-  background: #FFFFFF;
-  border-color: #E5DED2;
-  box-shadow: 0 10px 30px rgba(48,52,58,.06);
-}
-.admin-login h1, .admin-top h1, .admin-card h2 { color: #30343A; }
-.admin-login > p:not(.eyebrow), .admin-top p { color: #73777B; }
-.admin-back { color: #98743D; }
-.admin-login label, .admin-form label,
-.admin-setting-field { color: #555A5E; }
-
-.admin-login input, .admin-form input,
-.admin-form textarea, .admin-form select,
-.admin-table input, .admin-table select,
-.admin-actions input, .admin-actions select,
-.admin-setting-field textarea, .admin-setting > textarea {
-  color: #30343A;
-  background: #FBFAF7;
-  border-color: #DED8CE;
-}
-.admin-tabs { border-color: #E5DED2; }
-.admin-tabs button { color: #666B6F; }
-.admin-tabs button.active {
-  color: #80602F;
-  border-color: #E1D3B9;
-  background: #F7F3EB;
-}
-.admin-card p, .admin-card td, .admin-card label { color: #555A5E; }
-.admin-stat {
-  background: #F8F6F1;
-  border-color: #E8E2D8;
-}
-.admin-stat strong { color: #98743D; }
-.admin-stat span { color: #777B7E; }
-.admin-table th { color: #80602F; }
-.admin-table th, .admin-table td { border-bottom-color: #EAE5DC; }
-.admin-table small { color: #777B7E; }
-.admin-setting { border-bottom-color: #EAE5DC; }
-.admin-notice {
-  color: #765A2C;
-  background: #F8F2E6;
-  border-color: #E5D4B3;
-}
-.admin-setting input[type=checkbox],
-.admin-table td input[type=checkbox] {
-  accent-color: #B9955A;
+.spec-group .spec-item.is-highlight {
+  border-color: rgba(197,164,109,.45);
+  background: rgba(197,164,109,.08);
 }
 
-/* Gallery */
-.vehicle-gallery a {
-  border-color: #E5DED2;
-  background: #F1EEE8;
+.spec-group .spec-item.is-highlight strong {
+  color: #e4c991;
 }
 
-/* Mobile */
+/* DESCRIPTION */
+
+.vehicle-description-block {
+  margin-top: 42px;
+  padding: 28px 30px;
+  border: 1px solid rgba(65,72,78,.18);
+  border-radius: 14px;
+  background: rgba(245,246,247,.48);
+}
+
+.vehicle-description-block p {
+  color: #343a40;
+  font-size: 15px;
+}
+
+/* ADDITIONAL TECHNICAL SPECS */
+
+.technical-spec-section { padding-top: 42px; }
+
+.technical-spec-table {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 9px;
+  border: 0;
+  margin-top: 18px;
+}
+
+.technical-spec-table .spec-item {
+  padding: 13px 15px;
+  border: 1px solid #3d4144;
+  border-radius: 9px;
+  background: #202326;
+}
+
+.technical-spec-table .spec-item span {
+  color: #b8b9b7;
+  font-size: 11px;
+}
+
+.technical-spec-table .spec-item strong {
+  color: #f4f0e8;
+  font-size: 13px;
+}
+
+/* SUMMARY */
+
+.detail-summary {
+  border-color: #46433c;
+  box-shadow: 0 16px 36px rgba(20,24,27,.18);
+}
+
+.detail-summary h2 { font-size: 27px; }
+.detail-summary .detail-trim { font-size: 14px; }
+.summary-stat span { font-size: 12px; }
+.summary-stat strong { font-size: 14px; }
+.detail-price { font-size: 22px; }
+.form-help { font-size: 11px; line-height: 1.9; }
+
+.content-block { font-size: 15px; }
+.content-block h2 { font-size: 26px; }
+
+:focus-visible {
+  outline: 2px solid #c5a46d;
+  outline-offset: 3px;
+}
+
 @media (max-width: 700px) {
-  .main-nav {
-    background: rgba(255,255,255,.98);
-    border-bottom-color: #E5DED2;
-    box-shadow: 0 12px 22px rgba(48,52,58,.08);
-  }
-  .hero::before {
-    background: linear-gradient(
-      0deg,
-      rgba(247,245,240,.98) 0%,
-      rgba(247,245,240,.88) 42%,
-      rgba(247,245,240,.12) 100%
-    );
-  }
-  .hero-copy, .hero h1 { color: #30343A; }
-  .hero p { color: #555A5E; }
-}
+  body { font-size: 14px; }
 
-@media (prefers-reduced-motion: reduce) {
-  .vehicle-card, .vehicle-gallery img { transition: none; }
+  .spec-groups {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .spec-group { padding: 16px; }
+
+  .spec-group .spec-item {
+    min-height: 64px;
+    padding: 9px 10px;
+  }
+
+  .spec-group .spec-item strong { font-size: 13px; }
+
+  .vehicle-description-block {
+    padding: 20px 17px;
+    margin-top: 28px;
+  }
+
+  .technical-spec-table { grid-template-columns: 1fr; }
+  .hero p { font-size: 14px; }
 }
