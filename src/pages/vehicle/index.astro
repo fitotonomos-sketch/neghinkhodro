@@ -1,0 +1,20 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import VehicleDetailRuntime from '../../components/VehicleDetailRuntime.astro';
+---
+
+<SiteLayout
+  title="جزئیات خودرو | نگین خودرو"
+  description="مشخصات و اطلاعات خودروهای موجود در نگین خودرو."
+>
+  <div id="vehicle-detail-root" data-has-initial="false">
+    <section class="section">
+      <div class="container empty-state" role="status" aria-live="polite">
+        <span class="eyebrow">NEGIN KHODRO · VEHICLE COLLECTION</span>
+        <h1>در حال دریافت مشخصات خودرو…</h1>
+        <p>اطلاعات خودرو از موجودی به‌روز نگین خودرو دریافت می‌شود.</p>
+      </div>
+    </section>
+  </div>
+  <VehicleDetailRuntime />
+</SiteLayout>

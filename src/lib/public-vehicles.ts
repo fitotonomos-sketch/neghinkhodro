@@ -1,4 +1,4 @@
-﻿
+
 import { createClient } from '@supabase/supabase-js';
 import { vehicles as demoVehicles } from '../data/vehicles.js';
 
@@ -6,6 +6,8 @@ type Relation =
   | { name?: string | null; slug?: string | null }
   | Array<{ name?: string | null; slug?: string | null }>
   | null;
+
+export type PublicVehicle = Record<string, any>;
 
 type VehicleRow = Record<string, any> & {
   brand?: Relation;
@@ -83,7 +85,7 @@ const db =
           detectSessionInUrl: false,
         },
         global: {
-          fetch: (input, init = {}) =>
+          fetch: (input: RequestInfo | URL, init: RequestInit = {}) =>
             fetch(input, {
               ...init,
               signal: init.signal || AbortSignal.timeout(8_000),
@@ -174,7 +176,7 @@ function safeMediaUrl(
   }
 }
 
-function mapVehicle(row: VehicleRow) {
+export function mapVehicle(row: VehicleRow): PublicVehicle {
   const brand = firstRelation(row.brand);
   const category = firstRelation(row.category);
   const priceVisible = row.price_visible !== false;
@@ -321,14 +323,22 @@ export async function getPublicVehicles() {
   return inventoryRequest;
 }
 
-export async function getPublicVehicleBySlug(slug: string) {
+/** Fetch one currently available vehicle directly from Supabase.
+ * Used by the static-host fallback route so newly published slugs work without a rebuild.
+ */
+export async function getPublicVehicleBySlug(slug: string): Promise<PublicVehicle | null> {
   const normalizedSlug = slug.trim();
+  if (!normalizedSlug || !db) return null;
 
-  if (!normalizedSlug) return null;
+  const { data, error } = await db
+    .from('vehicles')
+    .select(PUBLIC_VEHICLE_SELECT)
+    .eq('slug', normalizedSlug)
+    .eq('status', 'available')
+    .maybeSingle();
 
-  const vehicles = await getPublicVehicles();
-
-  return vehicles.find((vehicle) => vehicle.slug === normalizedSlug) || null;
+  if (error) throw error;
+  return data ? mapVehicle(data as VehicleRow) : null;
 }
 
 export function formatVehiclePrice(

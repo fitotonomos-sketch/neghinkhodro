@@ -1,47 +1,6 @@
 
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
-import VehicleCard from '../components/VehicleCard.astro';
-import { getPublicVehicles } from '../lib/public-vehicles';
-
-let vehicles = [];
-
-try {
-  vehicles = await getPublicVehicles();
-} catch (error) {
-  console.error('[Negin Khodro] Homepage inventory error:', error);
-}
-
-const featuredVehicles = vehicles
-  .filter((vehicle) => vehicle.featured)
-  .slice(0, 3);
-
-const selectedVehicles = vehicles
-  .filter((vehicle) => !vehicle.featured && vehicle.show_on_home)
-  .slice(0, 3);
-
-const categoryNames = [
-  ...new Set(
-    vehicles.map((vehicle) => vehicle.category).filter(Boolean)
-  ),
-];
-
-const categorySymbols = ['S', 'U', 'C', 'N'];
-
-const categories = [
-  ...categoryNames.map((name, index) => ({
-    name,
-    count: `${vehicles.filter((vehicle) => vehicle.category === name).length} خودرو`,
-    symbol: categorySymbols[index % categorySymbols.length],
-    query: name,
-  })),
-  {
-    name: 'همه خودروها',
-    count: `${vehicles.length} خودرو`,
-    symbol: 'N',
-    query: '',
-  },
-];
 ---
 
 <SiteLayout
@@ -127,10 +86,8 @@ const categories = [
         </a>
       </div>
 
-      <div class="vehicle-grid">
-        {featuredVehicles.map((vehicle) => (
-          <VehicleCard vehicle={vehicle} featured />
-        ))}
+      <div class="vehicle-grid" data-home-featured aria-live="polite">
+        <p class="vehicle-showcase-state" role="status">در حال دریافت خودروهای منتخب…</p>
       </div>
     </div>
   </section>
@@ -153,10 +110,8 @@ const categories = [
         </a>
       </div>
 
-      <div class="vehicle-grid">
-        {selectedVehicles.map((vehicle) => (
-          <VehicleCard vehicle={vehicle} />
-        ))}
+      <div class="vehicle-grid" data-home-selected aria-live="polite">
+        <p class="vehicle-showcase-state" role="status">در حال دریافت پیشنهادها…</p>
       </div>
 
       <div class="center-action">
@@ -181,32 +136,65 @@ const categories = [
         </div>
       </div>
 
-      <div class="categories" data-categories-grid>
-        {categories.map((category) => (
-          <a
-            class="category-tile"
-            href={
-              category.query
-                ? `/vehicles/?category=${encodeURIComponent(category.query)}`
-                : '/vehicles/'
-            }
-          >
-            <span>
-              <strong>{category.name}</strong>
-              <small>{category.count}</small>
-            </span>
-
-            <span class="category-symbol" aria-hidden="true">
-              {category.symbol}
-            </span>
-          </a>
-        ))}
+      <div class="categories" data-categories-grid aria-live="polite">
+        <p class="vehicle-showcase-state" role="status">در حال دریافت دسته‌بندی‌ها…</p>
       </div>
     </div>
   </section>
 
   <script>
     import { supabase } from '../lib/supabase';
+    import { getPublicVehicles } from '../lib/public-vehicles';
+    import { escapeHtml, renderVehicleCardMarkup } from '../lib/vehicle-markup';
+
+    const featuredGrid = document.querySelector<HTMLElement>('[data-home-featured]');
+    const selectedGrid = document.querySelector<HTMLElement>('[data-home-selected]');
+    const categoriesGrid = document.querySelector<HTMLElement>('[data-categories-grid]');
+    const inquiryVehicleSelect = document.querySelector<HTMLSelectElement>('[data-inquiry-vehicle-select]');
+
+    getPublicVehicles().then((vehicles) => {
+      const featured = vehicles.filter((vehicle) => vehicle.featured).slice(0, 3);
+      const selected = vehicles.filter((vehicle) => !vehicle.featured && vehicle.show_on_home).slice(0, 3);
+
+      if (featuredGrid) featuredGrid.innerHTML = featured.length
+        ? featured.map((vehicle) => renderVehicleCardMarkup(vehicle, true)).join('')
+        : '<p class="vehicle-showcase-state">در حال حاضر خودروی منتخب منتشر نشده است.</p>';
+
+      if (selectedGrid) selectedGrid.innerHTML = selected.length
+        ? selected.map((vehicle) => renderVehicleCardMarkup(vehicle)).join('')
+        : '<p class="vehicle-showcase-state">پیشنهاد ویژه‌ای برای نمایش ثبت نشده است.</p>';
+
+      if (categoriesGrid) {
+        const names = [...new Set(vehicles.map((vehicle) => vehicle.category).filter(Boolean))];
+        const symbols = ['S', 'U', 'C', 'N'];
+        const categories = names.map((name, index) => ({
+          name,
+          count: vehicles.filter((vehicle) => vehicle.category === name).length,
+          symbol: symbols[index % symbols.length],
+          query: name,
+        }));
+        categories.push({ name: 'همه خودروها', count: vehicles.length, symbol: 'N', query: '' });
+        categoriesGrid.innerHTML = categories.map((category) => `
+          <a class="category-tile" href="${category.query ? `/vehicles/?category=${encodeURIComponent(category.query)}` : '/vehicles/'}">
+            <span><strong>${escapeHtml(category.name)}</strong><small>${new Intl.NumberFormat('fa-IR').format(category.count)} خودرو</small></span>
+            <span class="category-symbol" aria-hidden="true">${category.symbol}</span>
+          </a>`).join('');
+      }
+
+      if (inquiryVehicleSelect) {
+        for (const vehicle of vehicles) {
+          const option = document.createElement('option');
+          option.value = `${vehicle.name} ${vehicle.model || ''}`.trim();
+          option.textContent = option.value;
+          inquiryVehicleSelect.append(option);
+        }
+      }
+    }).catch((error) => {
+      console.error('[Negin Khodro] Homepage inventory failed:', error);
+      for (const grid of [featuredGrid, selectedGrid, categoriesGrid]) {
+        if (grid) grid.innerHTML = '<p class="vehicle-showcase-state">دریافت موجودی در حال حاضر ممکن نیست. لطفاً دوباره تلاش کنید.</p>';
+      }
+    });
 
     const form = document.querySelector<HTMLFormElement>(
       '[data-inquiry-form]'
@@ -413,17 +401,12 @@ const categories = [
             <label class="full-width">
               موضوع درخواست
 
-              <select name="vehicle_name" required>
+              <select name="vehicle_name" data-inquiry-vehicle-select required>
                 <option value="">انتخاب کنید</option>
                 <option value="مشاوره خرید خودرو">
                   مشاوره خرید خودرو
                 </option>
 
-                {vehicles.map((vehicle) => (
-                  <option value={`${vehicle.name} ${vehicle.model}`}>
-                    {vehicle.name} {vehicle.model}
-                  </option>
-                ))}
               </select>
             </label>
 

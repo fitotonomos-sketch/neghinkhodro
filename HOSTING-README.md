@@ -1,42 +1,78 @@
-# Negin Khodro — Node.js SSR hosting
+# راهنمای استقرار نگین خودرو روی هاست لینوکس اشتراکی
 
-This project is an Astro SSR application. It is **not** a static `public_html` package.
-The hosting provider must support a persistent Node.js process (Render Web Service,
-DirectAdmin Node.js/Passenger, or an equivalent runtime).
+این بسته برای **هاست معمولی Apache/Linux** آماده شده است. وب‌سایت پس از Build به فایل‌های استاتیک تبدیل می‌شود؛ روی هاست نیازی به Node.js، PM2، Passenger، اجرای دائمی سرویس یا Render نیست.
 
-## Requirements
+## پیش‌نیازهای هاست
 
-- Node.js 22.16.x (or a compatible Node 22 release)
-- A persistent Node application process
-- HTTPS outbound access to the Supabase project
-- Environment variables listed in `.env.example`
+- Apache با پشتیبانی از `.htaccess` و `mod_rewrite`.
+- PHP 8 یا جدیدتر برای تولید زنده Sitemap و متادیتای صفحات خودروهای تازه‌اضافه‌شده.
+- افزونه PHP cURL (پیشنهادی) یا فعال بودن `allow_url_fopen` برای اتصال PHP به Supabase.
+- دامنه متصل به پوشه `public_html` و گواهی SSL فعال.
 
-## Commands — Windows PowerShell
+حتی اگر ارتباط خروجی PHP با Supabase موقتاً قطع باشد، فایل‌های استاتیک سایت و دریافت موجودی در مرورگر همچنان قابل ارائه‌اند. بااین‌حال، برای متادیتای اولیه و پیش‌نمایش صحیح صفحات جدید در تلگرام/واتساپ و همچنین Sitemap زنده، PHP باید بتواند از طریق HTTPS به Supabase متصل شود. در صورت اختلال این ارتباط، فایل Sitemap ثابت و صفحات HTML قبلاً ساخته‌شده نقش پشتیبان دارند؛ برای خودروهای تازه، متادیتای سروری تا بازگشت ارتباط در دسترس نخواهد بود.
 
-```powershell
-Copy-Item .env.example .env
-notepad .env
-npm install
-npm run build
-npm run start
+## ساخت نسخه قابل آپلود
+
+1. پروژه را روی رایانه توسعه استخراج کنید.
+2. فایل `.env.example` را به `.env` کپی کنید.
+3. سه مقدار زیر را با اطلاعات واقعی پروژه پر کنید:
+
+```dotenv
+PUBLIC_SITE_URL=https://neghinkhodro.com
+PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_OR_PUBLISHABLE_KEY
 ```
 
-The standalone Node adapter starts `dist/server/entry.mjs`. Do not upload the generated
-`dist/` directory to Apache as if it were a static site. Do not deploy this repository as
-a Render Static Site.
+4. در ریشه پروژه اجرا کنید:
 
-## Render
+```bash
+npm ci
+npm run build
+```
 
-The included `render.yaml` defines a Free Web Service for initial testing, build/start commands, Node runtime,
-health check, and required Supabase environment variables. Render Free instances sleep after inactivity. Set the two Supabase values
-in the Render dashboard; do not commit them to Git.
+Node.js نسخه 22.16 یا جدیدتر فقط برای ساخت خروجی روی رایانه یا محیط Build لازم است؛ روی هاست اجرا نمی‌شود.
 
-## Supabase
+در پایان، پوشه `dist/` آماده آپلود است. اسکریپت Build فایل‌های `.htaccess` را صریحاً کپی می‌کند و پیکربندی PHP سایت‌مپ را از همان `.env` می‌سازد.
 
-Run migration files in `supabase/migrations` in filename order. On an existing project,
-run only migrations that have not already been applied, then run the new
-`20261122100000_harden_admin_rls_and_grants.sql` migration. Do not re-run data-import
-migrations blindly against a production database.
+## آپلود در پارس‌پک
 
-Use only the public anon/publishable key in `PUBLIC_SUPABASE_ANON_KEY`. Never put a
-`service_role` or `sb_secret_` key in a `PUBLIC_` variable.
+1. از فایل‌های فعلی `public_html` نسخه پشتیبان بگیرید.
+2. محتوای داخل `dist/` را مستقیماً در `public_html/` آپلود کنید؛ خود پوشه `dist` را به‌عنوان یک زیرپوشه آپلود نکنید.
+3. مطمئن شوید فایل‌های مخفی، به‌خصوص `.htaccess` و `dist/_private/.htaccess` نیز منتقل شده‌اند.
+4. دامنه را روی همان Document Root تنظیم و SSL را فعال کنید.
+5. فایل `public_html/_private/sitemap-config.php` باید وجود داشته باشد. این فایل در Build با آدرس سایت، URL سوپابیس و کلید عمومی ساخته می‌شود و با Rewrite از دسترسی مستقیم وب مسدود شده است.
+
+## رفتار موجودی و صفحات خودرو
+
+- صفحه اصلی و `/vehicles/` در زمان بازدید، فهرست موجودی منتشرشده را مستقیماً از Supabase می‌خوانند.
+- افزودن، ویرایش، انتشار یا حذف خودرو از پنل مدیریت، به Build مجدد برای به‌روزرسانی ویترین نیاز ندارد.
+- Astro در Build برای خودروهای موجود HTML مستقل با عنوان، توضیحات، Canonical و JSON-LD می‌سازد تا در صورت نبود Rewrite نیز نسخه پایه قابل استفاده باشد.
+- در هاست Apache، تمام آدرس‌های `/vehicle/<slug>/` به `vehicle.php` هدایت می‌شوند تا متادیتای هر خودرو (قدیمی یا تازه) در هر درخواست از Supabase تازه‌سازی شود. سپس پوسته استاتیک جزئیات به مرورگر تحویل داده می‌شود و متن کامل، تصاویر و مشخصات به‌صورت زنده دریافت می‌شوند. این مسیر برای تغییر عنوان سئو یا تصویر خودرو به Build مجدد نیاز ندارد.
+- `sitemap.php` فهرست مسیرها را از موجودی عمومی Supabase می‌گیرد؛ بنابراین خودروهای تازه منتشرشده بدون Build در Sitemap هم ظاهر می‌شوند.
+- برای تغییر طراحی، CSS/JS یا صفحات محتوایی ثابت، Build جدید و آپلود دوباره `dist/` لازم است.
+
+## آدرس‌های مهم پس از انتشار
+
+- `/` صفحه اصلی
+- `/vehicles/` موجودی خودروها
+- `/vehicle/<slug>/` جزئیات هر خودرو
+- `/modiriyat/` پنل مدیریت
+- `/sitemap.xml` نقشه سایت زنده
+- `/robots.txt` دستورهای خزنده‌ها
+- `/healthz.json` فایل بررسی در دسترس بودن خروجی استاتیک
+
+## امنیت و Supabase
+
+- فقط کلید عمومی `anon` یا `publishable` مجاز است. کلید `service_role` یا `sb_secret_` را در `.env` یا پیکربندی PHP قرار ندهید.
+- کلید عمومی در کد مرورگر قابل مشاهده است؛ حفاظت از داده‌ها باید توسط RLS و GRANTهای Supabase انجام شود.
+- هیچ Migration جدیدی برای تغییر میزبان لازم نیست. جدول‌ها، Auth، Storage و Policyهای موجود حفظ شده‌اند.
+- Migrationهای دیتابیس را صرفاً برای نصب هاست دوباره اجرا نکنید. فقط Migrationهای اجرا‌نشده را طبق ترتیب قبلی اعمال کنید.
+- پوشه `_private` برای جلوگیری از خواندن مستقیم فایل تنظیمات PHP مسدود شده است. `.htaccess`های خروجی را حذف نکنید.
+
+## عیب‌یابی سریع
+
+- **صفحه خودروهای جدید 404 است:** وجود `public_html/.htaccess` و فعال بودن Apache `mod_rewrite` را بررسی کنید.
+- **جزئیات خودرو باز می‌شود ولی عنوان تلگرام/واتساپ عمومی است:** PHP 8+، افزونه cURL یا `allow_url_fopen`، و مقادیر `public_html/_private/sitemap-config.php` را بررسی کنید. پیش‌نمایش شبکه‌های اجتماعی از JavaScript استفاده نمی‌کند؛ به همین دلیل `vehicle.php` برای تولید متادیتا سمت سرور وجود دارد.
+- **موجودی خالی است:** URL و کلید عمومی Supabase در Build صحیح باشند، اینترنت مرورگر به Supabase دسترسی داشته باشد و Policy خواندن عمومی خودروهای `available` برقرار باشد.
+- **پنل مدیریت وارد نمی‌شود:** ایمیل حساب Auth باید در `public.admins` مجاز باشد و Migrationهای امنیتی قبلی بدون تغییر باقی مانده باشند.
+- **تصاویر باز نمی‌شوند:** Bucket `negin-uploads` باید عمومی و URL تصاویر معتبر باشد.

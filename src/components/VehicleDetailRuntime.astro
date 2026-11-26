@@ -1,0 +1,93 @@
+<script>
+  import { getPublicVehicleBySlug, getPublicVehicles } from '../lib/public-vehicles';
+  import { renderVehicleDetailMarkup, renderVehicleJsonLd } from '../lib/vehicle-markup';
+
+  const root = document.querySelector<HTMLElement>('#vehicle-detail-root');
+
+  if (root) {
+    const getSlug = () => {
+      const explicit = root.dataset.vehicleSlug?.trim();
+      if (explicit) return explicit;
+      const match = window.location.pathname.match(/^\/vehicle\/([^/]+)\/?$/);
+      if (!match) return '';
+      try { return decodeURIComponent(match[1]); }
+      catch { return match[1]; }
+    };
+
+    const setMeta = (selector: string, value: string) => {
+      const node = document.querySelector<HTMLMetaElement>(selector);
+      if (node) node.content = value;
+    };
+
+    const showUnavailable = () => {
+      root.innerHTML = `<section class="section"><div class="container empty-state"><span class="eyebrow">VEHICLE NOT AVAILABLE</span><h1>این خودرو در دسترس نیست</h1><p>ممکن است خودرو فروخته شده یا از فهرست موجودی خارج شده باشد.</p><a class="button" href="/vehicles/">بازگشت به فهرست خودروها</a></div></section>`;
+      document.title = 'خودرو پیدا نشد | نگین خودرو';
+      setMeta('meta[name="robots"]', 'noindex,follow');
+      setMeta('meta[name="description"]', 'این خودرو در حال حاضر در فهرست موجودی نگین خودرو قرار ندارد.');
+    };
+
+    async function refreshVehicle() {
+      const slug = getSlug();
+      if (!slug) {
+        showUnavailable();
+        return;
+      }
+
+      try {
+        const [vehicle, inventory] = await Promise.all([
+          getPublicVehicleBySlug(slug),
+          getPublicVehicles(),
+        ]);
+
+        if (!vehicle) {
+          showUnavailable();
+          return;
+        }
+
+        const related = inventory
+          .filter((item) => item.brand === vehicle.brand && item.slug !== vehicle.slug)
+          .slice(0, 3);
+
+        root.innerHTML = renderVehicleDetailMarkup(vehicle, related);
+
+        const vehicleTitle = [vehicle.name, vehicle.model].filter(Boolean).join(' ');
+        const title = `${vehicle.seo_title || vehicleTitle} | نگین خودرو`;
+        const description = String(
+          vehicle.meta_description || vehicle.description || 'مشاهده مشخصات و جزئیات خودرو در نگین خودرو.'
+        ).slice(0, 300);
+        const canonical = `${window.location.origin}${window.location.pathname}`;
+        const image = new URL(vehicle.image || '/images/showroom-social.jpg', window.location.origin).href;
+
+        document.title = title;
+        setMeta('meta[name="description"]', description);
+        setMeta('meta[property="og:type"]', 'product');
+        setMeta('meta[name="robots"]', 'index,follow');
+        setMeta('meta[property="og:title"]', title);
+        setMeta('meta[property="og:description"]', description);
+        setMeta('meta[property="og:url"]', canonical);
+        setMeta('meta[property="og:image"]', image);
+        setMeta('meta[name="twitter:title"]', title);
+        setMeta('meta[name="twitter:description"]', description);
+        const canonicalNode = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+        if (canonicalNode) canonicalNode.href = canonical;
+
+        let jsonLd = document.querySelector<HTMLScriptElement>('#vehicle-jsonld');
+        if (!jsonLd) {
+          jsonLd = document.createElement('script');
+          jsonLd.id = 'vehicle-jsonld';
+          jsonLd.type = 'application/ld+json';
+          document.head.appendChild(jsonLd);
+        }
+        jsonLd.textContent = renderVehicleJsonLd(vehicle, canonical);
+      } catch (error) {
+        console.error('[Negin Khodro] Live vehicle refresh failed:', error);
+        // Existing prerendered content remains visible if Supabase is temporarily unavailable.
+        if (root.dataset.hasInitial !== 'true') {
+          root.innerHTML = `<section class="section"><div class="container empty-state"><h1>بارگذاری اطلاعات خودرو ممکن نشد</h1><p>اتصال به پایگاه داده موقتاً در دسترس نیست. لطفاً چند لحظه بعد دوباره تلاش کنید.</p><a class="button" href="/vehicles/">بازگشت به فهرست خودروها</a></div></section>`;
+        }
+      }
+    }
+
+    refreshVehicle();
+  }
+</script>

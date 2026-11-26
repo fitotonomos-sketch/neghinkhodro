@@ -626,3 +626,17 @@ body {
   .technical-spec-table { grid-template-columns: 1fr; }
   .hero p { font-size: 14px; }
 }
+
+/* Dynamic inventory loading states */
+.vehicle-showcase-state {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 28px 20px;
+  margin: 0;
+  border: 1px dashed var(--line, #514b40);
+  border-radius: 12px;
+  color: var(--muted, #a7a39b);
+  text-align: center;
+  line-height: 1.9;
+}
+.vehicle-showcase-state[hidden] { display: none !important; }
